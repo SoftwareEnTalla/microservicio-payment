@@ -1,0 +1,29 @@
+hint: Usando 'master' como el nombre de la rama inicial. Este nombre de rama predeterminado
+hint: está sujeto a cambios. Para configurar el nombre de la rama inicial para usar en todos
+hint: de sus nuevos repositorios, reprimiendo esta advertencia, llama a:
+hint:
+hint: 	git config --global init.defaultBranch <nombre>
+hint:
+hint: Los nombres comúnmente elegidos en lugar de 'master' son 'main', 'trunk' y
+hint: 'development'. Se puede cambiar el nombre de la rama recién creada mediante este comando:
+hint:
+hint: 	git branch -m <nombre>
+Inicializado repositorio Git vacío en /media/datos/Trabajo/ProjectosAngular/backend/payment-service/.git/
+[master (commit-raíz) efba699] Initial commit
+ 1 file changed, 1 insertion(+)
+ create mode 100644 README.md
+Desde https://github.com/SoftwareEnTalla/microservicio-payment
+ * branch            main       -> FETCH_HEAD
+ * [nueva rama]      main       -> origin/main
+hint: Diverging branches can't be fast-forwarded, you need to either:
+hint:
+hint: 	git merge --no-ff
+hint:
+hint: or:
+hint:
+hint: 	git rebase
+hint:
+hint: Disable this message with "git config advice.diverging false"
+fatal: No es posible hacer fast-forward, abortando.
+error: no se puede pull con rebase: Tienes cambios sin marcar.
+error: Por favor, confírmalos o guárdalos.
