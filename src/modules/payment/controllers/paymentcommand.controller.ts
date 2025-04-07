@@ -23,9 +23,8 @@ import { LoggerClient } from "src/common/logger/logger.client";
 import { LogExecutionTime } from "src/common/logger/loggers.functions";
 
 @ApiTags("Payment Command")
-@Controller("payments/command")
+@Controller("payment/command")
 export class PaymentCommandController {
-
   #logger = new Logger(PaymentCommandController.name);
 
   //Constructor del controlador: PaymentCommandController
@@ -112,10 +111,7 @@ export class PaymentCommandController {
     @Body() partialEntity: UpdatePaymentDto
   ): Promise<PaymentResponse<Payment>> {
     try {
-      const entity = await this.service.update(
-        id,
-        partialEntity
-      );
+      const entity = await this.service.update(id, partialEntity);
 
       if (!entity) {
         throw new NotFoundException("Payment entity not found.");
@@ -204,4 +200,3 @@ export class PaymentCommandController {
     return await this.service.bulkDelete(ids);
   }
 }
-

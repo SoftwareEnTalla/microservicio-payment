@@ -17,13 +17,12 @@ import { CacheModule } from "@nestjs/cache-manager";
 import { PaymentInterceptor } from "../interceptors/payment.interceptor";
 import { PaymentLoggingInterceptor } from "../interceptors/payment.logging.interceptor";
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([Payment]), // Asegúrate de incluir esto
     CacheModule.register(), // Importa el módulo de caché
   ],
-  controllers: [PaymentCommandController, PaymentQueryController],
+  controllers: [PaymentQueryController, PaymentCommandController],
   providers: [
     PaymentQueryService,
     PaymentCommandService,
@@ -54,4 +53,3 @@ import { PaymentLoggingInterceptor } from "../interceptors/payment.logging.inter
   ],
 })
 export class PaymentModule {}
-
