@@ -13,11 +13,11 @@ export function setupSwagger(
     .setDescription(description)
     .setVersion(version)
     // Organiza por módulos/funcionalidades
-    .addTag("Authentication", "Operaciones de autenticación y usuarios")
+    //.addTag("Authentication", "Operaciones de autenticación y usuarios")
     .addTag("Payments", "Gestión de transacciones y procesamiento de pagos")
-    .addTag("Subscriptions", "Manejo de suscripciones recurrentes")
-    .addTag("Webhooks", "Endpoints para integraciones externas")
-    .addTag("Reports", "Generación de reportes y analytics")
+    //.addTag("Subscriptions", "Manejo de suscripciones recurrentes")
+    //.addTag("Webhooks", "Endpoints para integraciones externas")
+    //.addTag("Reports", "Generación de reportes y analytics")
     // Configuración de seguridad (ejemplo con JWT)
     .addBearerAuth(
       {
@@ -64,3 +64,6 @@ export function setupSwagger(
   });
   return apiDoc;
 }
+
+
+

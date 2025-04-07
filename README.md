@@ -8,6 +8,47 @@
 
 ```
 .
+| |____common
+| | |____database
+| | |____dto
+| | | |____args
+| | | |____inputs
+| | |____helpers
+| | |____logger
+| | |____types
+| |____config
+| |____core
+| | |____configs
+| | |____loaders
+| | |____services
+| |____errors
+| |____filters
+| |____interfaces
+| |____modules
+| | |____payment
+| | | |____aggregates
+| | | |____commands
+| | | | |____handlers
+| | | |____config
+| | | |____controllers
+| | | |____decorators
+| | | |____dtos
+| | | |____entities
+| | | |____events
+| | | |____graphql
+| | | |____guards
+| | | |____interceptors
+| | | |____modules
+| | | |____queries
+| | | | |____handlers
+| | | |____repositories
+| | | |____sagas
+| | | |____services
+| | | |____shared
+| | | | |____event-store
+| | | | |____messaging
+| | | |____types
+| |____utils
 | |____accept-language-parser
 | | |____tests
 | |____accepts

@@ -22,7 +22,7 @@ import { PaymentLoggingInterceptor } from "../interceptors/payment.logging.inter
     TypeOrmModule.forFeature([Payment]), // Asegúrate de incluir esto
     CacheModule.register(), // Importa el módulo de caché
   ],
-  controllers: [PaymentQueryController, PaymentCommandController],
+  controllers: [PaymentCommandController /*, PaymentQueryController*/],
   providers: [
     PaymentQueryService,
     PaymentCommandService,
