@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # PAYMENT Microservice
 
 **Fecha de creación**: 2025-04-07
@@ -3908,3 +3909,5 @@
 =======
 # microservicio-payment
 >>>>>>> efba699 (Initial commit)
+=======
+>>>>>>> b66ec7c (ok)
