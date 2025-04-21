@@ -26,24 +26,32 @@ import { LoggerClient } from "src/common/logger/logger.client";
 //@UseGuards(JwtGraphQlAuthGuard)
 @Resolver(() => Payment)
 export class PaymentResolver {
-
-   //Constructor del resolver de Payment
+  //Constructor del resolver de Payment
   constructor(
     private readonly service: PaymentQueryService,
     private readonly commandBus: CommandBus
   ) {}
 
   @LogExecutionTime({
-    layer: 'resolver',
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   // Mutaciones
   @Mutation(() => PaymentResponse<Payment>)
   async createPayment(
@@ -52,18 +60,26 @@ export class PaymentResolver {
     return this.commandBus.execute(new CreatePaymentCommand(input));
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Mutation(() => PaymentResponse<Payment>)
   async updatePayment(
     @Args("id", { type: () => String }) id: string,
@@ -72,18 +88,26 @@ export class PaymentResolver {
     return this.commandBus.execute(new UpdatePaymentCommand(id, input));
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Mutation(() => PaymentResponse<Payment>)
   async createOrUpdatePayment(
     @Args("data", { type: () => CreateOrUpdatePaymentDto })
@@ -103,18 +127,26 @@ export class PaymentResolver {
     return this.commandBus.execute(new CreatePaymentCommand(data.input));
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Mutation(() => Boolean)
   async deletePayment(
     @Args("id", { type: () => String }) id: string
@@ -122,18 +154,26 @@ export class PaymentResolver {
     return this.commandBus.execute(new DeletePaymentCommand(id));
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   // Queries
   @Query(() => PaymentsResponse<Payment>)
   async payments(
@@ -143,18 +183,26 @@ export class PaymentResolver {
     return this.service.findAll(options, paginationArgs);
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => PaymentsResponse<Payment>)
   async payment(
     @Args("id", { type: () => String }) id: string
@@ -162,18 +210,26 @@ export class PaymentResolver {
     return this.service.findById(id);
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => PaymentsResponse<Payment>)
   async paymentsByField(
     @Args("field", { type: () => String }) field: string,
@@ -188,18 +244,26 @@ export class PaymentResolver {
     );
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => PaymentsResponse<Payment>)
   async paymentsWithPagination(
     @Args("page", { type: () => Number, defaultValue: 1 }) page: number,
@@ -212,35 +276,51 @@ export class PaymentResolver {
     return this.service.findWithPagination({}, paginationArgs);
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => Number)
   async totalPayments(): Promise<number> {
     return this.service.count();
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => PaymentsResponse<Payment>)
   async searchPayments(
     @Args("where", { type: () => PaymentDto, nullable: false })
@@ -250,18 +330,26 @@ export class PaymentResolver {
     return payments;
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => PaymentResponse<Payment>, { nullable: true })
   async findOnePayment(
     @Args("where", { type: () => PaymentDto, nullable: false })
@@ -270,18 +358,26 @@ export class PaymentResolver {
     return this.service.findOne(where);
   }
 
-
-@LogExecutionTime({
-    layer: 'resolver',
+  @LogExecutionTime({
+    layer: "resolver",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentResolver.name)
 
       .get(PaymentResolver.name),
-    })
+  })
   @Query(() => PaymentResponse<Payment>)
   async findOnePaymentOrFail(
     @Args("where", { type: () => PaymentDto, nullable: false })
@@ -290,5 +386,3 @@ export class PaymentResolver {
     return this.service.findOneOrFail(where);
   }
 }
-
-

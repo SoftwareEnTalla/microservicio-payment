@@ -9,7 +9,13 @@ import {
   Get,
   Query,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+} from "@nestjs/swagger";
 import { PaymentCommandService } from "../services/paymentcommand.service";
 
 import { DeleteResult } from "typeorm";
@@ -27,14 +33,11 @@ import { BadRequestException } from "@nestjs/common";
 @ApiTags("Payment Command")
 @Controller("payments/command")
 export class PaymentCommandController {
-
   #logger = new Logger(PaymentCommandController.name);
 
   //Constructor del controlador: PaymentCommandController
   constructor(private readonly service: PaymentCommandService) {}
 
-  
-  
   @ApiOperation({ summary: "Create a new payment" })
   @ApiBody({ type: CreatePaymentDto })
   @ApiResponse({ status: 201, type: PaymentResponse<Payment> })
@@ -43,7 +46,16 @@ export class PaymentCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentCommandController.name)
@@ -66,8 +78,6 @@ export class PaymentCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Create multiple payments" })
   @ApiBody({ type: [CreatePaymentDto] })
   @ApiResponse({ status: 201, type: PaymentsResponse<Payment> })
@@ -76,7 +86,16 @@ export class PaymentCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentCommandController.name)
@@ -99,8 +118,6 @@ export class PaymentCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Update an payment" })
   @ApiParam({
     name: "id",
@@ -121,7 +138,16 @@ export class PaymentCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentCommandController.name)
@@ -151,8 +177,6 @@ export class PaymentCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Update multiple payments" })
   @ApiBody({ type: [UpdatePaymentDto] })
   @ApiResponse({ status: 200, type: PaymentsResponse<Payment> })
@@ -161,7 +185,16 @@ export class PaymentCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentCommandController.name)
@@ -184,11 +217,12 @@ export class PaymentCommandController {
     }
   }
 
-  
-  
-  @ApiOperation({ summary: "Delete an payment" })   
-  @ApiResponse({ status: 200, type: PaymentResponse<Payment>,description:
-    "Instancia de Payment eliminada satisfactoriamente.", })
+  @ApiOperation({ summary: "Delete an payment" })
+  @ApiResponse({
+    status: 200,
+    type: PaymentResponse<Payment>,
+    description: "Instancia de Payment eliminada satisfactoriamente.",
+  })
   @ApiResponse({
     status: 400,
     description:
@@ -199,7 +233,16 @@ export class PaymentCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentCommandController.name)
@@ -207,7 +250,6 @@ export class PaymentCommandController {
   })
   async delete(@Param("id") id: string): Promise<PaymentResponse<Payment>> {
     try {
-       
       const result = await this.service.delete(id);
 
       if (!result) {
@@ -221,8 +263,6 @@ export class PaymentCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Delete multiple payments" })
   @ApiResponse({ status: 200, type: DeleteResult })
   @Delete("bulk")
@@ -230,7 +270,16 @@ export class PaymentCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(PaymentCommandController.name)
@@ -240,4 +289,3 @@ export class PaymentCommandController {
     return await this.service.bulkDelete(ids);
   }
 }
-
