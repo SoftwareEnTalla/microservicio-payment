@@ -29,26 +29,21 @@
  */
 
 
-import { AggregateRoot } from '@nestjs/cqrs';
-import { BaseEntity } from '../entities/base.entity';
+import { Injectable } from "@nestjs/common";
+import { KafkaService } from "./kafka.service";
+import { IEvent, IEventBus } from "@nestjs/cqrs";
 
-export class PaymentAggregate extends AggregateRoot {
-  private state!: BaseEntity;
+@Injectable()
+export class KafkaEventBus implements IEventBus {
+  constructor(private readonly kafkaService: KafkaService) {}
 
-  constructor() {
-    super();
+  publish<T extends IEvent>(event: T) {
+    const topic = event.constructor.name.toLowerCase().replace("event", "");
+    this.kafkaService.sendMessage(topic, event);
   }
 
-  // Métodos para modificar el estado
-  public create(data: any): void {
-    // Lógica de creación
-  }
-
-  public update(data: any): void {
-    // Lógica de actualización
-  }
-
-  public delete(): void {
-    // Lógica de eliminación
+  publishAll(events: IEvent[]) {
+    events.forEach((event) => this.publish(event));
   }
 }
+

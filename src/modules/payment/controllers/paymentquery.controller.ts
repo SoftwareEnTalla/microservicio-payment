@@ -1,3 +1,34 @@
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
 import {
   Controller,
   Get,
@@ -8,20 +39,17 @@ import {
 } from "@nestjs/common";
 import { PaymentQueryService } from "../services/paymentquery.service";
 import { FindManyOptions } from "typeorm";
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiParam,
-} from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from "@nestjs/swagger";
 import { LogExecutionTime } from "src/common/logger/loggers.functions";
 import { PaymentResponse, PaymentsResponse } from "../types/payment.types";
 import { LoggerClient } from "src/common/logger/logger.client";
 import { Payment } from "../entities/payment.entity";
-import { Order, PaginationArgs } from "src/common/dto/args/pagination.args";
+import { PaginationArgs } from "src/common/dto/args/pagination.args";
+import { OrderBy, valueOfOrderBy } from "src/common/types/common.types";
 import { Helper } from "src/common/helpers/helpers";
-import { PaymentDto } from "../dtos/createpayment.dto";
+import { PaymentDto } from "../dtos/all-dto";
+
+import { logger } from '@core/logs/logger';
 
 @ApiTags("Payment Query")
 @Controller("payments/query")
@@ -37,7 +65,7 @@ export class PaymentQueryController {
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "size", required: false, type: Number })
   @ApiQuery({ name: "sort", required: false, type: String })
-  @ApiQuery({ name: "order", required: false, type: () => Order })
+  @ApiQuery({ name: "order", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
   @ApiQuery({ name: "initDate", required: false, type: Date })
   @ApiQuery({ name: "endDate", required: false, type: Date })
@@ -46,19 +74,20 @@ export class PaymentQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
   async findAll(
-    @Query("options") options?: FindManyOptions<Payment>
+    @Query("options") options?: FindManyOptions<Payment>    
   ): Promise<PaymentsResponse<Payment>> {
     try {
+     
       const payments = await this.service.findAll(options);
-      this.#logger.verbose("Retrieving all payment");
+      logger.info("Retrieving all payment");
       return payments;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -67,18 +96,13 @@ export class PaymentQueryController {
   @ApiOperation({ summary: "Get payment by ID" })
   @ApiResponse({ status: 200, type: PaymentResponse<Payment> })
   @ApiResponse({ status: 404, description: "Payment not found" })
-  @ApiParam({
-    name: "id",
-    required: true,
-    description: "ID of the payment to retrieve",
-    type: String,
-  })
+  @ApiParam({ name: 'id', required: true, description: 'ID of the payment to retrieve', type: String })
   @LogExecutionTime({
     layer: "controller",
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -92,32 +116,22 @@ export class PaymentQueryController {
       }
       return payment;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
 
   @Get("field/:field") // Asegúrate de que el endpoint esté definido correctamente
   @ApiOperation({ summary: "Find payment by specific field" })
-  @ApiQuery({
-    name: "value",
-    required: true,
-    description: "Value to search for",
-    type: String,
-  }) // Documenta el parámetro de consulta
-  @ApiParam({
-    name: "field",
-    required: true,
-    description: "Field to filter payment",
-    type: String,
-  }) // Documenta el parámetro de la ruta
+  @ApiQuery({ name: "value", required: true, description: 'Value to search for', type: String }) // Documenta el parámetro de consulta
+  @ApiParam({ name: 'field', required: true, description: 'Field to filter payment', type: String }) // Documenta el parámetro de la ruta
   @ApiResponse({ status: 200, type: PaymentsResponse })
   @LogExecutionTime({
     layer: "controller",
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -142,10 +156,11 @@ export class PaymentQueryController {
       }
       return entities;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
+
 
   @Get("pagination")
   @ApiOperation({ summary: "Find payments with pagination" })
@@ -154,7 +169,7 @@ export class PaymentQueryController {
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "size", required: false, type: Number })
   @ApiQuery({ name: "sort", required: false, type: String })
-  @ApiQuery({ name: "order", required: false, type: () => Order })
+  @ApiQuery({ name: "order", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
   @ApiQuery({ name: "initDate", required: false, type: Date })
   @ApiQuery({ name: "endDate", required: false, type: Date })
@@ -163,7 +178,7 @@ export class PaymentQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -172,17 +187,17 @@ export class PaymentQueryController {
     @Query("page") page?: number,
     @Query("size") size?: number,
     @Query("sort") sort?: string,
-    @Query("order") order?: Order,
+    @Query("order") order?: string,
     @Query("search") search?: string,
     @Query("initDate") initDate?: Date,
     @Query("endDate") endDate?: Date
   ): Promise<PaymentsResponse<Payment>> {
     try {
-      const paginationArgs: PaginationArgs = PaginationArgs.createPaginator(
+     const paginationArgs: PaginationArgs = PaginationArgs.createPaginator(
         page || 1,
         size || 25,
         sort || "createdAt", // Asigna valor por defecto
-        order || Order.asc, // Asigna valor por defecto
+        valueOfOrderBy(order || OrderBy.asc), // Asigna valor por defecto
         search || "", // Asigna valor por defecto
         initDate || undefined, // Puede ser undefined si no se proporciona
         endDate || undefined // Puede ser undefined si no se proporciona
@@ -196,7 +211,7 @@ export class PaymentQueryController {
       }
       return entities;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -209,7 +224,7 @@ export class PaymentQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -224,7 +239,7 @@ export class PaymentQueryController {
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "size", required: false, type: Number })
   @ApiQuery({ name: "sort", required: false, type: String })
-  @ApiQuery({ name: "order", required: false, type: () => Order })
+  @ApiQuery({ name: "order", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
   @ApiQuery({ name: "initDate", required: false, type: Date })
   @ApiQuery({ name: "endDate", required: false, type: Date })
@@ -233,16 +248,16 @@ export class PaymentQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
   async findAndCount(
-    @Query() where: Record<string, any> = {},
+    @Query() where: Record<string, any>={},
     @Query("page") page?: number,
     @Query("size") size?: number,
     @Query("sort") sort?: string,
-    @Query("order") order?: Order,
+    @Query("order") order?: string,
     @Query("search") search?: string,
     @Query("initDate") initDate?: Date,
     @Query("endDate") endDate?: Date
@@ -252,7 +267,7 @@ export class PaymentQueryController {
         page || 1,
         size || 25,
         sort || "createdAt", // Asigna valor por defecto
-        order || Order.asc, // Asigna valor por defecto
+        valueOfOrderBy(order || OrderBy.asc), // Asigna valor por defecto
         search || "", // Asigna valor por defecto
         initDate || undefined, // Puede ser undefined si no se proporciona
         endDate || undefined // Puede ser undefined si no se proporciona
@@ -269,7 +284,7 @@ export class PaymentQueryController {
       }
       return entities;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -283,12 +298,12 @@ export class PaymentQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
   async findOne(
-    @Query() where: Record<string, any> = {}
+    @Query() where: Record<string, any>={}
   ): Promise<PaymentResponse<Payment>> {
     try {
       const entity = await this.service.findOne({
@@ -300,7 +315,7 @@ export class PaymentQueryController {
       }
       return entity;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -314,12 +329,12 @@ export class PaymentQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
   async findOneOrFail(
-    @Query() where: Record<string, any> = {}
+    @Query() where: Record<string, any>={}
   ): Promise<PaymentResponse<Payment> | Error> {
     try {
       const entity = await this.service.findOne({
@@ -331,8 +346,10 @@ export class PaymentQueryController {
       }
       return entity;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
 }
+
+

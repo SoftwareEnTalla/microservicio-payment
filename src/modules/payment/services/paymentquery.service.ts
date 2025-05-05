@@ -1,4 +1,35 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
+import { Injectable, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { FindManyOptions } from "typeorm";
 import { Payment } from "../entities/payment.entity";
 import { BaseEntity } from "../entities/base.entity";
@@ -11,14 +42,20 @@ import { PaginationArgs } from "src/common/dto/args/pagination.args";
 //Logger
 import { LogExecutionTime } from "src/common/logger/loggers.functions";
 import { LoggerClient } from "src/common/logger/logger.client";
+import { ModuleRef } from "@nestjs/core";
+import { logger } from '@core/logs/logger';
+
+
 
 @Injectable()
-export class PaymentQueryService {
+export class PaymentQueryService implements OnModuleInit{
   // Private properties
   readonly #logger = new Logger(PaymentQueryService.name);
-  private readonly loggerClient = new LoggerClient();
+  private readonly loggerClient = LoggerClient.getInstance();
 
-  constructor(private readonly repository: PaymentQueryRepository) {
+  constructor(private readonly repository: PaymentQueryRepository,
+  private moduleRef: ModuleRef
+  ) {
     this.validate();
   }
 
@@ -26,18 +63,40 @@ export class PaymentQueryService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentQueryService.name)
+      .get(PaymentQueryService.name),
+  })
+  onModuleInit() {
+    //Se ejecuta en la inicialización del módulo
+  }
+
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
+        return await client.send(logData);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -46,12 +105,12 @@ export class PaymentQueryService {
       const entityInstance = Object.create(Payment.prototype);
       if (!(entityInstance instanceof BaseEntity)) {
         let sms = `El tipo ${Payment.name} no extiende de BaseEntity. Asegúrate de que todas las entidades hereden correctamente.`;
-        this.#logger.verbose(sms);
+        logger.info(sms);
         throw new Error(sms);
       }
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -60,18 +119,17 @@ export class PaymentQueryService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -82,7 +140,7 @@ export class PaymentQueryService {
     try {
       const payments = await this.repository.findAll(options);
       // Devolver respuesta
-      this.#logger.verbose("sms");
+      logger.info("sms");
       return {
         ok: true,
         message: "Listado de payments obtenido con éxito",
@@ -96,7 +154,7 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
@@ -106,18 +164,17 @@ export class PaymentQueryService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -140,28 +197,29 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 
+
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -198,28 +256,28 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
+ 
 
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -246,28 +304,29 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
+  
+
 
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -275,22 +334,23 @@ export class PaymentQueryService {
     return this.repository.count();
   }
 
+ 
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -322,34 +382,34 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 
+
+
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
-  async findOne(
-    where?: Record<string, any>
-  ): Promise<PaymentResponse<Payment>> {
+  async findOne(where?: Record<string, any>): Promise<PaymentResponse<Payment>> {
     try {
       const entity = await this.repository.findOne({
         where: where,
@@ -366,28 +426,28 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(PaymentQueryService.name)
       .get(PaymentQueryService.name),
   })
@@ -410,9 +470,12 @@ export class PaymentQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 }
+
+
+

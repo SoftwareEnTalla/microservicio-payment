@@ -1,15 +1,45 @@
-import { Entity } from 'typeorm';
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { CreatePaymentDto } from '../dtos/createpayment.dto';
-import { UpdatePaymentDto } from '../dtos/updatepayment.dto';
-import { DeletePaymentDto } from '../dtos/deletepayment.dto';
+import { CreatePaymentDto,UpdatePaymentDto,DeletePaymentDto } from '../dtos/all-dto';
+ 
 import { IsNotEmpty, IsString, validate } from 'class-validator';
 import { plainToClass, plainToInstance } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, ObjectType } from "@nestjs/graphql";
 
 @ObjectType()
-@Entity('Payment')
+@Entity('payment')
 export class Payment extends BaseEntity {
 
   // Propiedades de Payment
@@ -21,7 +51,19 @@ export class Payment extends BaseEntity {
   @IsString()
   @IsNotEmpty()
   @Field(() => String, { description: "Nombre de la instancia de Payment", nullable: false })
-  private name: string = "";
+  @Column({ type: 'varchar', length: 100, nullable: false,comment: 'Este es un campo para nombrar la instancia Payment' })
+  private name!: string ;
+
+  @ApiProperty({
+      type: String,
+      nullable: false,
+      description: "Descripción de la instancia de Payment",
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: "Descripción de la instancia de Payment", nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false,default: "Sin descripción",comment: 'Este es un campo para describir la instancia Payment' })
+  private description!: string ;
 
   // Constructor de Payment
   constructor() {
@@ -36,6 +78,14 @@ export class Payment extends BaseEntity {
 
   set setName(value: string) {
     this.name = value;
+  }
+
+   get getDescription(): string {
+    return this.description;
+  }
+
+  set setDescription(value: string) {
+    this.description = value;
   }
 
   //Métodos o funciones de Payment
