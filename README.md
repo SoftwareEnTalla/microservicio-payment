@@ -1,6 +1,6 @@
 # PAYMENT Microservice
 
-**Creation Date**: 2025-05-05
+**Creation Date**: 2026-04-05
 
 **Author**: Ing. Persy Morell Guerra e Ing. Dailyn García Dominguez (SoftwarEnTalla CEO)
 
@@ -51,6 +51,7 @@
 | | |____services
 | | |____shared
 | | | |____adapters
+| | | |____decorators
 | | | |____event-store
 | | | |____messaging
 | | |____types

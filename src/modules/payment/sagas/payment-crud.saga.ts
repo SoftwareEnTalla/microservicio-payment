@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -31,11 +31,12 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Saga, CommandBus, EventBus, ofType } from '@nestjs/cqrs';
-import { Observable, filter, map, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import {
   PaymentCreatedEvent,
   PaymentUpdatedEvent,
-  PaymentDeletedEvent
+  PaymentDeletedEvent,
+
 } from '../events/exporting.event';
 import {
   SagaPaymentFailedEvent
@@ -99,6 +100,7 @@ export class PaymentCrudSaga {
       })
     );
   };
+
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -31,38 +31,16 @@
 
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { CreatePaymentCommand } from "../createpayment.command";
-import { KafkaEventPublisher } from "../../shared/adapters/kafka-event-publisher";
-import { KafkaEventSubscriber } from "../../shared/adapters/kafka-event-subscriber";
-import { EventStoreService } from "../../shared/event-store/event-store.service";
-import { PaymentCreatedEvent } from "../../events/paymentcreated.event";
-import { v4 as uuidv4 } from "uuid";
+import { PaymentCommandService } from "../../services/paymentcommand.service";
 
 @CommandHandler(CreatePaymentCommand)
 export class CreatePaymentHandler
   implements ICommandHandler<CreatePaymentCommand>
 {
   constructor(
-    private readonly eventPublisher: KafkaEventPublisher,
-    private readonly eventSubscriber: KafkaEventSubscriber,
-    private readonly eventStore: EventStoreService
+    private readonly commandService: PaymentCommandService
   ) {}
   async execute(command: CreatePaymentCommand) {
-    command.id = command.id || uuidv4(); // Generar ID si no existe
-    // Implementar lógica del comando
-    const event = new PaymentCreatedEvent(command.id, command.metadata || command.metadata || {
-        instance: {},
-        metadata: {
-          initiatedBy: 'system',
-          correlationId: command.id,
-        },
-      });
-
-    // 1. Persistir en event store
-    await this.eventStore.appendEvent("payment", event);
-
-    // 2. Publicar a Kafka (y por tanto a otros microservicios)
-    await this.eventPublisher.publish(event);
-
-    return event;
+    return await this.commandService.create(command.payload);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -202,9 +202,11 @@ export class PaymentCommandController {
   })
   async update(
     @Param("id") id: string,
-    @Body() partialEntity: UpdatePaymentDto
+    @Body() body: any
   ): Promise<PaymentResponse<Payment>> {
     try {
+      // Permitir body plano o anidado en 'data'
+      const partialEntity = body?.data ? body.data : body;
       // ✅ Validación de coincidencia de IDs
       if (id !== partialEntity.id) {
         throw new BadRequestException(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -41,8 +41,18 @@ import { PaymentResolver } from "../graphql/payment.resolver";
 import { PaymentAuthGuard } from "../guards/paymentauthguard.guard";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Payment } from "../entities/payment.entity";
-import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
+import { BaseEntity } from "../entities/base.entity";
 import { CacheModule } from "@nestjs/cache-manager";
+import { CqrsModule } from "@nestjs/cqrs";
+import { KafkaModule } from "./kafka.module";
+import { CreatePaymentHandler } from "../commands/handlers/createpayment.handler";
+import { UpdatePaymentHandler } from "../commands/handlers/updatepayment.handler";
+import { DeletePaymentHandler } from "../commands/handlers/deletepayment.handler";
+import { GetPaymentByIdHandler } from "../queries/handlers/getpaymentbyid.handler";
+import { GetPaymentByFieldHandler } from "../queries/handlers/getpaymentbyfield.handler";
+import { GetAllPaymentHandler } from "../queries/handlers/getallpayment.handler";
+import { PaymentCrudSaga } from "../sagas/payment-crud.saga";
+import { EVENT_TOPICS } from "../events/event-registry";
 
 //Interceptors
 import { PaymentInterceptor } from "../interceptors/payment.interceptor";
@@ -50,19 +60,18 @@ import { PaymentLoggingInterceptor } from "../interceptors/payment.logging.inter
 
 //Event-Sourcing dependencies
 import { EventStoreService } from "../shared/event-store/event-store.service";
-import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
-import { KafkaService } from "../shared/messaging/kafka.service";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Payment]), // Asegúrate de incluir esto
+    CqrsModule,
+    KafkaModule,
+    TypeOrmModule.forFeature([BaseEntity, Payment]), // Incluir BaseEntity para herencia
     CacheModule.register(), // Importa el módulo de caché
   ],
   controllers: [PaymentCommandController, PaymentQueryController],
   providers: [
     //Services
     EventStoreService,
-    KafkaService,
     PaymentQueryService,
     PaymentCommandService,
     //Repositories
@@ -76,17 +85,32 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     PaymentInterceptor,
     PaymentLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
+    //CQRS Handlers
+    CreatePaymentHandler,
+    UpdatePaymentHandler,
+    DeletePaymentHandler,
+    GetPaymentByIdHandler,
+    GetPaymentByFieldHandler,
+    GetAllPaymentHandler,
+    PaymentCrudSaga,
+    //Configurations
+    {
+      provide: 'EVENT_SOURCING_CONFIG',
+      useFactory: () => ({
+        enabled: process.env.EVENT_SOURCING_ENABLED !== 'false',
+        kafkaEnabled: process.env.KAFKA_ENABLED !== 'false',
+        eventStoreEnabled: process.env.EVENT_STORE_ENABLED === 'true',
+        publishEvents: true,
+        useProjections: true,
+        topics: EVENT_TOPICS
+      })
+    },
   ],
   exports: [
+    CqrsModule,
+    KafkaModule,
     //Services
     EventStoreService,
-    KafkaService,
     PaymentQueryService,
     PaymentCommandService,
     //Repositories
@@ -100,12 +124,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     PaymentInterceptor,
     PaymentLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
 })
 export class PaymentModule {}

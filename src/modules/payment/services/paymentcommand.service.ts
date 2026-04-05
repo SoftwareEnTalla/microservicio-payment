@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -50,6 +50,8 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
 import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { ModuleRef } from "@nestjs/core";
 import { PaymentQueryService } from "./paymentquery.service";
+import { BaseEvent } from "../events/base.event";
+
 
 @Injectable()
 export class PaymentCommandService implements OnModuleInit {
@@ -90,6 +92,35 @@ export class PaymentCommandService implements OnModuleInit {
     //Se ejecuta en la inicialización del módulo
   }
 
+  private dslValue(entityData: Record<string, any>, currentData: Record<string, any>, inputData: Record<string, any>, field: string): any {
+    return entityData?.[field] ?? currentData?.[field] ?? inputData?.[field];
+  }
+
+  private async publishDslDomainEvents(events: BaseEvent[]): Promise<void> {
+    for (const event of events) {
+      await this.eventPublisher.publish(event as any);
+      if (process.env.EVENT_STORE_ENABLED === "true") {
+        await this.eventStore.appendEvent('payment-' + event.aggregateId, event);
+      }
+    }
+  }
+
+  private async applyDslServiceRules(
+    operation: "create" | "update" | "delete",
+    inputData: Record<string, any>,
+    entity?: Payment | null,
+    current?: Payment | null,
+    publishEvents: boolean = true,
+  ): Promise<void> {
+    const entityData = ((entity ?? {}) as Record<string, any>);
+    const currentData = ((current ?? {}) as Record<string, any>);
+    const pendingEvents: BaseEvent[] = [];
+
+    if (publishEvents) {
+      await this.publishDslDomainEvents(pendingEvents);
+    }
+  }
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
@@ -118,9 +149,10 @@ export class PaymentCommandService implements OnModuleInit {
   ): Promise<PaymentResponse<Payment>> {
     try {
       logger.info("Receiving in service:", createPaymentDtoInput);
-      const entity = await this.repository.create(
-        Payment.fromDto(createPaymentDtoInput)
-      );
+      const candidate = Payment.fromDto(createPaymentDtoInput);
+      await this.applyDslServiceRules("create", createPaymentDtoInput as Record<string, any>, candidate, null, false);
+      const entity = await this.repository.create(candidate);
+      await this.applyDslServiceRules("create", createPaymentDtoInput as Record<string, any>, entity, null, true);
       logger.info("Entity created on service:", entity);
       // Respuesta si el payment no existe
       if (!entity)
@@ -219,10 +251,14 @@ export class PaymentCommandService implements OnModuleInit {
     partialEntity: UpdatePaymentDto
   ): Promise<PaymentResponse<Payment>> {
     try {
+      const currentEntity = await this.queryRepository.findById(id);
+      const candidate = Object.assign(new Payment(), currentEntity ?? {}, partialEntity);
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, candidate, currentEntity, false);
       const entity = await this.repository.update(
         id,
-        Payment.fromDto(partialEntity)
+        candidate
       );
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, entity, currentEntity, true);
       // Respuesta si el payment no existe
       if (!entity)
         throw new NotFoundException("Entidades Payments no encontradas.");
@@ -319,7 +355,10 @@ export class PaymentCommandService implements OnModuleInit {
       if (!entity)
         throw new NotFoundException("Instancias de Payment no encontradas.");
 
+      await this.applyDslServiceRules("delete", { id }, entity, entity, false);
+
       const result = await this.repository.delete(id);
+      await this.applyDslServiceRules("delete", { id }, entity, entity, true);
       // Devolver payment
       return {
         ok: true,

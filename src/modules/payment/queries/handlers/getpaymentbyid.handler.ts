@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -31,10 +31,13 @@
 
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { GetPaymentByIdQuery } from '../getpaymentbyid.query';
+import { PaymentQueryService } from '../../services/paymentquery.service';
 
 @QueryHandler(GetPaymentByIdQuery)
 export class GetPaymentByIdHandler implements IQueryHandler<GetPaymentByIdQuery> {
+  constructor(private readonly queryService: PaymentQueryService) {}
+
   async execute(query: GetPaymentByIdQuery) {
-    // Implementar lógica de la query
+    return this.queryService.findOne({ where: { id: query.filters?.id } });
   }
 }

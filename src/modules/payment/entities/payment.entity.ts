@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 SoftwarEnTalla
+ * Copyright (c) 2026 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -28,111 +28,91 @@
  *
  */
 
-
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne, OneToMany, ManyToMany, JoinTable, Index, Check, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { CreatePaymentDto,UpdatePaymentDto,DeletePaymentDto } from '../dtos/all-dto';
- 
-import { IsNotEmpty, IsString, validate } from 'class-validator';
-import { plainToClass, plainToInstance } from 'class-transformer';
+import { CreatePaymentDto, UpdatePaymentDto, DeletePaymentDto } from '../dtos/all-dto';
+import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Field, ObjectType } from "@nestjs/graphql";
+import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
+import { plainToInstance } from 'class-transformer';
 
+
+
+@ChildEntity('payment')
 @ObjectType()
-@Entity('payment')
 export class Payment extends BaseEntity {
-
-  // Propiedades de Payment
   @ApiProperty({
-      type: String,
-      nullable: false,
-      description: "Nombre de la instancia de Payment",
+    type: String,
+    nullable: false,
+    description: "Nombre de la instancia de Payment",
   })
   @IsString()
   @IsNotEmpty()
   @Field(() => String, { description: "Nombre de la instancia de Payment", nullable: false })
-  @Column({ type: 'varchar', length: 100, nullable: false,comment: 'Este es un campo para nombrar la instancia Payment' })
-  private name!: string ;
+  @Column({ type: 'varchar', length: 100, nullable: false, comment: 'Este es un campo para nombrar la instancia Payment' })
+  private name!: string;
 
   @ApiProperty({
-      type: String,
-      nullable: false,
-      description: "Descripción de la instancia de Payment",
+    type: String,
+    description: "Descripción de la instancia de Payment",
   })
   @IsString()
   @IsNotEmpty()
   @Field(() => String, { description: "Descripción de la instancia de Payment", nullable: false })
-  @Column({ type: 'varchar', length: 255, nullable: false,default: "Sin descripción",comment: 'Este es un campo para describir la instancia Payment' })
-  private description!: string ;
+  @Column({ type: 'varchar', length: 255, nullable: false, default: "Sin descripción", comment: 'Este es un campo para describir la instancia Payment' })
+  private description!: string;
 
-  // Constructor de Payment
+
+
+  protected executeDslLifecycle(): void {
+
+  }
+
+  // Relación con BaseEntity (opcional, si aplica)
+  // @OneToOne(() => BaseEntity, { cascade: true })
+  // @JoinColumn()
+  // base!: BaseEntity;
+
   constructor() {
     super();
+    this.type = 'payment';
   }
-  
-  // Getters y Setters
 
+  // Getters y Setters
   get getName(): string {
     return this.name;
   }
-
   set setName(value: string) {
     this.name = value;
   }
-
-   get getDescription(): string {
+  get getDescription(): string {
     return this.description;
   }
 
-  set setDescription(value: string) {
-    this.description = value;
+  // Métodos abstractos implementados
+  async create(data: any): Promise<BaseEntity> {
+    Object.assign(this, data);
+    this.executeDslLifecycle();
+    this.modificationDate = new Date();
+    return this;
+  }
+  async update(data: any): Promise<BaseEntity> {
+    Object.assign(this, data);
+    this.executeDslLifecycle();
+    this.modificationDate = new Date();
+    return this;
+  }
+  async delete(id: string): Promise<BaseEntity> {
+    this.id = id;
+    return this;
   }
 
-  //Métodos o funciones de Payment
-
-  static fromDto(dto:CreatePaymentDto|UpdatePaymentDto|DeletePaymentDto):Payment{
-       return plainToClass(Payment, dto);
+  // Método estático para convertir DTOs a entidad con sobrecarga
+  static fromDto(dto: CreatePaymentDto): Payment;
+  static fromDto(dto: UpdatePaymentDto): Payment;
+  static fromDto(dto: DeletePaymentDto): Payment;
+  static fromDto(dto: any): Payment {
+    // plainToInstance soporta todos los DTOs
+    return plainToInstance(Payment, dto);
   }
-
-  //Implementación de Métodos abstractos de la clase padre
-  async create(data: any): Promise<Payment> {
-
-    // Verifica si data es un array y toma el primer objeto si es necesario
-    const singleData = Array.isArray(data) ? data[0] : data;  // Si es un array, tomamos el primer objeto
-
-    // Convertir el objeto data a una instancia del DTO
-    const paymentDto = plainToInstance(CreatePaymentDto, data as CreatePaymentDto);
-
-    // Validar el DTO
-    const errors = await validate(paymentDto);
-    if (errors.length > 0) {
-      throw new Error('Validation failed creating payment!'); // Manejo de errores de validación
-    }
-    // Asignar la fecha de modificación
-    paymentDto.modificationDate = new Date();
-    return {...this,...paymentDto};
-  }
-  async update(data: any): Promise<Payment>{
-
-    // Verifica si data es un array y toma el primer objeto si es necesario
-    const singleData = Array.isArray(data) ? data[0] : data;  // Si es un array, tomamos el primer objeto
-
-
-    // Convertir el objeto data a una instancia del DTO
-    const paymentDto = plainToInstance(CreatePaymentDto, singleData as CreatePaymentDto);
-
-
-    // Validar el DTO
-    const errors = await validate(paymentDto);
-    if (errors.length > 0) {
-      throw new Error('Validation failed creating payment!'); // Manejo de errores de validación
-    }
-    // Asignar la fecha de modificación
-    paymentDto.modificationDate = new Date();
-    return {...this,...paymentDto};
-  }
-  async delete():  Promise<Payment>{
-    return {...this};
-  }
-
 }
