@@ -289,7 +289,7 @@ export class Payment extends BaseEntity {
 
     // Rule: payment-must-have-idempotency-key
     // Todo pago debe incluir una clave de idempotencia.
-    if (!((this.idempotencyKey !== undefined && this.idempotencyKey !== null && this.idempotencyKey !== ''))) {
+    if (!(!(this.idempotencyKey === undefined || this.idempotencyKey === null || (typeof this.idempotencyKey === 'string' && String(this.idempotencyKey).trim() === '') || (Array.isArray(this.idempotencyKey) && this.idempotencyKey.length === 0) || (typeof this.idempotencyKey === 'object' && !Array.isArray(this.idempotencyKey) && Object.keys((this.idempotencyKey ?? {}) as Record<string, unknown>).length === 0)))) {
       throw new Error('PAYMENT_002: El pago requiere una clave de idempotencia');
     }
 

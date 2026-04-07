@@ -124,7 +124,7 @@ export class PaymentCommandService implements OnModuleInit {
 
       // Regla de servicio: payment-must-have-idempotency-key
       // Todo pago debe incluir una clave de idempotencia.
-      if (!((this.dslValue(entityData, currentData, inputData, 'idempotencyKey') !== undefined && this.dslValue(entityData, currentData, inputData, 'idempotencyKey') !== null && this.dslValue(entityData, currentData, inputData, 'idempotencyKey') !== ''))) {
+      if (!(!(this.dslValue(entityData, currentData, inputData, 'idempotencyKey') === undefined || this.dslValue(entityData, currentData, inputData, 'idempotencyKey') === null || (typeof this.dslValue(entityData, currentData, inputData, 'idempotencyKey') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'idempotencyKey')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'idempotencyKey')) && this.dslValue(entityData, currentData, inputData, 'idempotencyKey').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'idempotencyKey') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'idempotencyKey')) && Object.keys((this.dslValue(entityData, currentData, inputData, 'idempotencyKey') ?? {}) as Record<string, unknown>).length === 0)))) {
         throw new Error('PAYMENT_002: El pago requiere una clave de idempotencia');
       }
 
