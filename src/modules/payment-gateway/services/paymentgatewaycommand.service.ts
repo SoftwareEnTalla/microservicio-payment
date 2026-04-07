@@ -133,7 +133,7 @@ export class PaymentGatewayCommandService implements OnModuleInit {
 
       // Regla de servicio: active-gateway-requires-supported-methods
       // Una pasarela activa debe declarar métodos de pago soportados.
-      if (!(this.dslValue(entityData, currentData, inputData, 'status') === 'ACTIVE' && (this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') !== undefined && this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') !== null && this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') !== ''))) {
+      if (!(this.dslValue(entityData, currentData, inputData, 'status') === 'ACTIVE' && !(this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') === undefined || this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') === null || (typeof this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods')) && this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods')) && Object.keys((this.dslValue(entityData, currentData, inputData, 'supportedPaymentMethods') ?? {}) as Record<string, unknown>).length === 0)))) {
         logger.warn('PAYMENT_GATEWAY_002: Las pasarelas activas deben definir métodos de pago soportados');
       }
 
