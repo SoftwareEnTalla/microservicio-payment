@@ -267,8 +267,9 @@ export class Payment extends BaseEntity {
   @JoinColumn({ name: 'gatewayId' })
   paymentGateway!: PaymentGateway;
 
-  // Referencias externas resueltas vía eventos/queries entre microservicios.
-  // Se mantienen solamente merchantId y customerId para evitar dependencias ORM directas.
+  // Referencia externa a Merchant del bounded context merchant; se integra vía event-driven sin dependencia ORM directa.
+
+  // Referencia externa a Customer del bounded context customer; se integra vía event-driven sin dependencia ORM directa.
 
   @ApiProperty({
     type: () => [PaymentAttempt],
