@@ -36,8 +36,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
 import { plainToInstance } from 'class-transformer';
 import { PaymentGateway } from '../../payment-gateway/entities/payment-gateway.entity';
-import { Merchant } from '../../merchant/entities/merchant.entity';
-import { Customer } from '../../customer/entities/customer.entity';
 import { PaymentAttempt } from '../../payment-attempt/entities/payment-attempt.entity';
 
 @Index('idx_payment_code', ['code'], { unique: true })
@@ -269,25 +267,8 @@ export class Payment extends BaseEntity {
   @JoinColumn({ name: 'gatewayId' })
   paymentGateway!: PaymentGateway;
 
-  @ApiProperty({
-    type: () => Merchant,
-    nullable: false,
-    description: 'Relación con Merchant',
-  })
-  @Field(() => Merchant, { nullable: false })
-  @ManyToOne(() => Merchant, { nullable: false, onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'merchantId' })
-  merchant!: Merchant;
-
-  @ApiProperty({
-    type: () => Customer,
-    nullable: false,
-    description: 'Relación con Customer',
-  })
-  @Field(() => Customer, { nullable: false })
-  @ManyToOne(() => Customer, { nullable: false, onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'customerId' })
-  customer!: Customer;
+  // Referencias externas resueltas vía eventos/queries entre microservicios.
+  // Se mantienen solamente merchantId y customerId para evitar dependencias ORM directas.
 
   @ApiProperty({
     type: () => [PaymentAttempt],
