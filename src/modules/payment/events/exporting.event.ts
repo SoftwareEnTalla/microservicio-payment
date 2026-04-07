@@ -30,7 +30,7 @@
 export * from "./paymentdeleted.event"; 
 export * from "./paymentcreated.event";
 export * from "./paymentupdated.event";
-
+export * from "./paymentsucceeded.event";
 export * from "./event-registry";
 export * from "./base.event";
 export * from "./payment-failed.event";

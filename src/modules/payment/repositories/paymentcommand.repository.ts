@@ -53,7 +53,7 @@ import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import { PaymentCreatedEvent } from '../events/paymentcreated.event';
 import { PaymentUpdatedEvent } from '../events/paymentupdated.event';
 import { PaymentDeletedEvent } from '../events/paymentdeleted.event';
-
+import { PaymentSucceededEvent } from "../events/paymentsucceeded.event";
 
 //Enfoque Event Sourcing
 import { CommandBus } from '@nestjs/cqrs';
@@ -66,7 +66,7 @@ import { EventSourcingHelper } from '../shared/decorators/event-sourcing.helper'
 import { EventSourcingConfigOptions } from '../shared/decorators/event-sourcing.decorator';
 
 
-@EventsHandler(PaymentCreatedEvent, PaymentUpdatedEvent, PaymentDeletedEvent)
+@EventsHandler(PaymentCreatedEvent, PaymentUpdatedEvent, PaymentDeletedEvent, PaymentSucceededEvent)
 @Injectable()
 export class PaymentCommandRepository implements IEventHandler<BaseEvent>{
 
@@ -157,7 +157,8 @@ export class PaymentCommandRepository implements IEventHandler<BaseEvent>{
         return await this.onPaymentUpdated(event);
       case 'PaymentDeletedEvent':
         return await this.onPaymentDeleted(event);
-
+      case 'PaymentSucceededEvent':
+        return await this.onPaymentSucceeded(event);
     }
     return false;
   }
@@ -251,6 +252,19 @@ export class PaymentCommandRepository implements IEventHandler<BaseEvent>{
     return await this.repository.delete(event.aggregateId);
   }
 
+  private async onPaymentSucceeded(event: PaymentSucceededEvent) {
+    logger.info('Ready to handle onPaymentSucceeded event on repository:', event);
+    const payloadInstance = (event as any).payload?.instance;
+    if (payloadInstance) {
+      const projectedEntity = this.repository.create({
+        ...(payloadInstance as any),
+        id: event.aggregateId,
+        type: 'payment'
+      } as Partial<Payment>);
+      return await this.repository.save(projectedEntity as Payment);
+    }
+    return true;
+  }
 
 
   // ----------------------------

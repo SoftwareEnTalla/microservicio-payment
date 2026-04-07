@@ -36,7 +36,7 @@ import {
   PaymentCreatedEvent,
   PaymentUpdatedEvent,
   PaymentDeletedEvent,
-
+  PaymentSucceededEvent,
 } from '../events/exporting.event';
 import {
   SagaPaymentFailedEvent
@@ -101,6 +101,16 @@ export class PaymentCrudSaga {
     );
   };
 
+  @Saga()
+  onPaymentSucceeded = ($events: Observable<PaymentSucceededEvent>) => {
+    return $events.pipe(
+      ofType(PaymentSucceededEvent),
+      tap(event => {
+        this.logger.log(`Saga iniciada para evento de dominio PaymentSucceeded: ${event.aggregateId}`);
+      }),
+      map(() => null)
+    );
+  };
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

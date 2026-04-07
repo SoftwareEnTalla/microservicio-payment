@@ -107,7 +107,175 @@ export class BasePaymentDto {
   @Field(() => Boolean, { nullable: false })
   isActive: boolean = false; // Por defecto, el objeto no está activo
 
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Código interno del pago',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Código interno del pago', nullable: false })
+  code!: string;
 
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Referencia externa del pago',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Referencia externa del pago', nullable: true })
+  externalReference?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Identificador del comercio',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Identificador del comercio', nullable: false })
+  merchantId!: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Identificador del cliente',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Identificador del cliente', nullable: false })
+  customerId!: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Identificador de la orden asociada',
+  })
+  @IsUUID()
+  @IsOptional()
+  @Field(() => String, { description: 'Identificador de la orden asociada', nullable: true })
+  orderId?: string;
+
+  @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Monto total del pago',
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  @Field(() => Float, { description: 'Monto total del pago', nullable: false })
+  amount!: number;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Moneda del pago',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Moneda del pago', nullable: false })
+  currency!: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Estado actual del pago',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Estado actual del pago', nullable: false })
+  status!: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Clave de idempotencia para evitar cobros duplicados',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Clave de idempotencia para evitar cobros duplicados', nullable: false })
+  idempotencyKey!: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Método de pago seleccionado',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Método de pago seleccionado', nullable: false })
+  selectedPaymentMethodType!: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Red de tarjeta seleccionada si aplica',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Red de tarjeta seleccionada si aplica', nullable: true })
+  selectedCardNetwork?: string = '';
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Fecha de aprobación',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Fecha de aprobación', nullable: true })
+  approvedAt?: Date = new Date();
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Fecha de fallo',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Fecha de fallo', nullable: true })
+  failedAt?: Date = new Date();
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Fecha de cancelación',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Fecha de cancelación', nullable: true })
+  cancelledAt?: Date = new Date();
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Fecha de expiración',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Fecha de expiración', nullable: true })
+  expiredAt?: Date = new Date();
+
+  @ApiProperty({
+    type: () => Object,
+    nullable: true,
+    description: 'Metadatos adicionales del pago',
+  })
+  @IsObject()
+  @IsOptional()
+  @Field(() => String, { description: 'Metadatos adicionales del pago', nullable: true })
+  metadata?: Record<string, any> = {};
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Pasarela responsable del pago',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Pasarela responsable del pago', nullable: false })
+  gatewayId!: string;
 
   // Constructor
   constructor(partial: Partial<BasePaymentDto>) {

@@ -51,7 +51,7 @@ import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { ModuleRef } from "@nestjs/core";
 import { PaymentQueryService } from "./paymentquery.service";
 import { BaseEvent } from "../events/base.event";
-
+import { PaymentSucceededEvent } from '../events/paymentsucceeded.event';
 
 @Injectable()
 export class PaymentCommandService implements OnModuleInit {
@@ -115,7 +115,40 @@ export class PaymentCommandService implements OnModuleInit {
     const entityData = ((entity ?? {}) as Record<string, any>);
     const currentData = ((current ?? {}) as Record<string, any>);
     const pendingEvents: BaseEvent[] = [];
+    if (operation === 'create') {
+      // Regla de servicio: payment-amount-must-be-positive
+      // Todo pago debe tener un monto positivo.
+      if (!((this.dslValue(entityData, currentData, inputData, 'amount') === undefined || this.dslValue(entityData, currentData, inputData, 'amount') === null || this.dslValue(entityData, currentData, inputData, 'amount') > 0))) {
+        throw new Error('PAYMENT_001: El monto del pago debe ser mayor que cero');
+      }
 
+      // Regla de servicio: payment-must-have-idempotency-key
+      // Todo pago debe incluir una clave de idempotencia.
+      if (!((this.dslValue(entityData, currentData, inputData, 'idempotencyKey') !== undefined && this.dslValue(entityData, currentData, inputData, 'idempotencyKey') !== null && this.dslValue(entityData, currentData, inputData, 'idempotencyKey') !== ''))) {
+        throw new Error('PAYMENT_002: El pago requiere una clave de idempotencia');
+      }
+
+    }
+
+    if (operation === 'update') {
+      // Regla de servicio: payment-amount-must-be-positive
+      // Todo pago debe tener un monto positivo.
+      if (!((this.dslValue(entityData, currentData, inputData, 'amount') === undefined || this.dslValue(entityData, currentData, inputData, 'amount') === null || this.dslValue(entityData, currentData, inputData, 'amount') > 0))) {
+        throw new Error('PAYMENT_001: El monto del pago debe ser mayor que cero');
+      }
+
+      // Regla de servicio: succeeded-payment-emits-domain-event
+      // Cuando un pago pasa a exitoso debe emitirse un evento de dominio.
+      if (this.dslValue(entityData, currentData, inputData, 'status') === 'SUCCEEDED') {
+        pendingEvents.push(PaymentSucceededEvent.create(
+          String(entityData['id'] ?? currentData['id'] ?? inputData?.id ?? 'payment-update'),
+          (entity ?? current ?? inputData ?? {}) as any,
+          String(entityData['createdBy'] ?? currentData['createdBy'] ?? inputData?.createdBy ?? 'system'),
+          String(entityData['id'] ?? currentData['id'] ?? inputData?.id ?? 'payment-update')
+        ));
+      }
+
+    }
     if (publishEvents) {
       await this.publishDslDomainEvents(pendingEvents);
     }

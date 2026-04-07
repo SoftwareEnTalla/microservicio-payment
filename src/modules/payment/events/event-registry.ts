@@ -33,6 +33,7 @@ import { BaseEvent } from './base.event';
 import { PaymentCreatedEvent } from './paymentcreated.event';
 import { PaymentUpdatedEvent } from './paymentupdated.event';
 import { PaymentDeletedEvent } from './paymentdeleted.event';
+import { PaymentSucceededEvent } from './paymentsucceeded.event';
 
 export type RegisteredEventClass<T extends BaseEvent = BaseEvent> = new (
   aggregateId: string,
@@ -73,7 +74,7 @@ export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
   'payment-created': createEventDefinition('payment-created', PaymentCreatedEvent, EVENT_DEFINITION_OVERRIDES['payment-created']),
   'payment-updated': createEventDefinition('payment-updated', PaymentUpdatedEvent, EVENT_DEFINITION_OVERRIDES['payment-updated']),
   'payment-deleted': createEventDefinition('payment-deleted', PaymentDeletedEvent, EVENT_DEFINITION_OVERRIDES['payment-deleted']),
-
+  'payment-succeeded': createEventDefinition('payment-succeeded', PaymentSucceededEvent, EVENT_DEFINITION_OVERRIDES['payment-succeeded']),
 };
 
 export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = Object.fromEntries(

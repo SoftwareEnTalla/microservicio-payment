@@ -30,7 +30,9 @@
 
 
 import { PaymentModule } from "@modules/payment/modules/payment.module";
-
+import { PaymentAttemptModule } from "@modules/payment-attempt/modules/paymentattempt.module";
+import { PaymentGatewayModule } from "@modules/payment-gateway/modules/paymentgateway.module";
+import { PaymentMasterDataModule } from "@modules/payment-master-data/modules/paymentmasterdata.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { logger } from '@core/logs/logger';
 
@@ -74,7 +76,9 @@ try{
         .build();
 
       const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
-        include: [PaymentModule, /*, AuthModule, ReportsModule*/], // Lista todos los módulos
+        include: [PaymentModule,         PaymentAttemptModule,
+        PaymentGatewayModule,
+        PaymentMasterDataModule,/*, AuthModule, ReportsModule*/], // Lista todos los módulos
         deepScanRoutes: true, // Escanea en profundidad
         ignoreGlobalPrefix: false, // Considera el prefijo global (api/)
         extraModels: [], // Añade esto

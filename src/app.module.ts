@@ -47,7 +47,15 @@ import { LoggingModule } from "./modules/payment/modules/logger.module";
 import { ModuleRef } from "@nestjs/core";
 import { ServiceRegistry } from "@core/service-registry";
 import LoggerService, { logger } from "@core/logs/logger";
-
+import { PaymentAttemptModule } from "./modules/payment-attempt/modules/paymentattempt.module";
+import { PaymentAttemptCommandService } from "./modules/payment-attempt/services/paymentattemptcommand.service";
+import { PaymentAttemptQueryService } from "./modules/payment-attempt/services/paymentattemptquery.service";
+import { PaymentGatewayModule } from "./modules/payment-gateway/modules/paymentgateway.module";
+import { PaymentGatewayCommandService } from "./modules/payment-gateway/services/paymentgatewaycommand.service";
+import { PaymentGatewayQueryService } from "./modules/payment-gateway/services/paymentgatewayquery.service";
+import { PaymentMasterDataModule } from "./modules/payment-master-data/modules/paymentmasterdata.module";
+import { PaymentMasterDataCommandService } from "./modules/payment-master-data/services/paymentmasterdatacommand.service";
+import { PaymentMasterDataQueryService } from "./modules/payment-master-data/services/paymentmasterdataquery.service";
 
 //import GraphQLJSON from "graphql-type-json";
 
@@ -113,7 +121,9 @@ import LoggerService, { logger } from "@core/logs/logger";
      */
     CqrsModule,
     PaymentModule,
-        
+        PaymentAttemptModule,
+    PaymentGatewayModule,
+    PaymentMasterDataModule,    
     /**
      * Módulo Logger de la aplicación
      */
@@ -198,7 +208,12 @@ export class PaymentAppModule implements OnModuleInit {
     ServiceRegistry.getInstance().registryAll([
       PaymentCommandService,
       PaymentQueryService,
-    
+      PaymentAttemptCommandService,
+      PaymentAttemptQueryService,
+      PaymentGatewayCommandService,
+      PaymentGatewayQueryService,
+      PaymentMasterDataCommandService,
+      PaymentMasterDataQueryService,    
     ]);
     const loggerService = ServiceRegistry.getInstance().get(
       "LoggerService"
