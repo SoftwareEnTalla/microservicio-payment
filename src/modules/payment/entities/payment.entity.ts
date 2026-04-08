@@ -292,10 +292,6 @@ export class Payment extends BaseEntity {
     if (!(!(this.idempotencyKey === undefined || this.idempotencyKey === null || (typeof this.idempotencyKey === 'string' && String(this.idempotencyKey).trim() === '') || (Array.isArray(this.idempotencyKey) && this.idempotencyKey.length === 0) || (typeof this.idempotencyKey === 'object' && !Array.isArray(this.idempotencyKey) && Object.prototype.toString.call(this.idempotencyKey) === '[object Object]' && Object.keys(Object(this.idempotencyKey)).length === 0)))) {
       throw new Error('PAYMENT_002: El pago requiere una clave de idempotencia');
     }
-
-    // Rule: succeeded-payment-emits-domain-event
-    // Cuando un pago pasa a exitoso debe emitirse un evento de dominio.
-    // TODO DSL emit-event: payment-succeeded
   }
 
   // Relación con BaseEntity (opcional, si aplica)
