@@ -118,13 +118,13 @@ export class PaymentMasterDataCommandService implements OnModuleInit {
     if (operation === 'create') {
       // Regla de servicio: master-data-code-required
       // Todo dato maestro debe tener un código definido.
-      if (!((this.dslValue(entityData, currentData, inputData, 'code') !== undefined && this.dslValue(entityData, currentData, inputData, 'code') !== null && this.dslValue(entityData, currentData, inputData, 'code') !== ''))) {
+      if (!(!(this.dslValue(entityData, currentData, inputData, 'code') === undefined || this.dslValue(entityData, currentData, inputData, 'code') === null || (typeof this.dslValue(entityData, currentData, inputData, 'code') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'code')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'code')) && this.dslValue(entityData, currentData, inputData, 'code').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'code') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'code')) && Object.prototype.toString.call(this.dslValue(entityData, currentData, inputData, 'code')) === '[object Object]' && Object.keys(Object(this.dslValue(entityData, currentData, inputData, 'code'))).length === 0)))) {
         throw new Error('PAYMENT_MD_001: El dato maestro requiere un código');
       }
 
       // Regla de servicio: master-data-category-required
       // Todo dato maestro debe pertenecer a una categoría.
-      if (!((this.dslValue(entityData, currentData, inputData, 'category') !== undefined && this.dslValue(entityData, currentData, inputData, 'category') !== null && this.dslValue(entityData, currentData, inputData, 'category') !== ''))) {
+      if (!(!(this.dslValue(entityData, currentData, inputData, 'category') === undefined || this.dslValue(entityData, currentData, inputData, 'category') === null || (typeof this.dslValue(entityData, currentData, inputData, 'category') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'category')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'category')) && this.dslValue(entityData, currentData, inputData, 'category').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'category') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'category')) && Object.prototype.toString.call(this.dslValue(entityData, currentData, inputData, 'category')) === '[object Object]' && Object.keys(Object(this.dslValue(entityData, currentData, inputData, 'category'))).length === 0)))) {
         throw new Error('PAYMENT_MD_002: El dato maestro requiere una categoría');
       }
 
@@ -133,13 +133,13 @@ export class PaymentMasterDataCommandService implements OnModuleInit {
     if (operation === 'update') {
       // Regla de servicio: master-data-code-required
       // Todo dato maestro debe tener un código definido.
-      if (!((this.dslValue(entityData, currentData, inputData, 'code') !== undefined && this.dslValue(entityData, currentData, inputData, 'code') !== null && this.dslValue(entityData, currentData, inputData, 'code') !== ''))) {
+      if (!(!(this.dslValue(entityData, currentData, inputData, 'code') === undefined || this.dslValue(entityData, currentData, inputData, 'code') === null || (typeof this.dslValue(entityData, currentData, inputData, 'code') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'code')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'code')) && this.dslValue(entityData, currentData, inputData, 'code').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'code') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'code')) && Object.prototype.toString.call(this.dslValue(entityData, currentData, inputData, 'code')) === '[object Object]' && Object.keys(Object(this.dslValue(entityData, currentData, inputData, 'code'))).length === 0)))) {
         throw new Error('PAYMENT_MD_001: El dato maestro requiere un código');
       }
 
       // Regla de servicio: master-data-category-required
       // Todo dato maestro debe pertenecer a una categoría.
-      if (!((this.dslValue(entityData, currentData, inputData, 'category') !== undefined && this.dslValue(entityData, currentData, inputData, 'category') !== null && this.dslValue(entityData, currentData, inputData, 'category') !== ''))) {
+      if (!(!(this.dslValue(entityData, currentData, inputData, 'category') === undefined || this.dslValue(entityData, currentData, inputData, 'category') === null || (typeof this.dslValue(entityData, currentData, inputData, 'category') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'category')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'category')) && this.dslValue(entityData, currentData, inputData, 'category').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'category') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'category')) && Object.prototype.toString.call(this.dslValue(entityData, currentData, inputData, 'category')) === '[object Object]' && Object.keys(Object(this.dslValue(entityData, currentData, inputData, 'category'))).length === 0)))) {
         throw new Error('PAYMENT_MD_002: El dato maestro requiere una categoría');
       }
 

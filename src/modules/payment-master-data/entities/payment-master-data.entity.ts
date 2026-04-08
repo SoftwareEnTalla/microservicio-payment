@@ -134,13 +134,13 @@ export class PaymentMasterData extends BaseEntity {
   protected executeDslLifecycle(): void {
     // Rule: master-data-code-required
     // Todo dato maestro debe tener un código definido.
-    if (!((this.code !== undefined && this.code !== null && this.code !== ''))) {
+    if (!(!(this.code === undefined || this.code === null || (typeof this.code === 'string' && String(this.code).trim() === '') || (Array.isArray(this.code) && this.code.length === 0) || (typeof this.code === 'object' && !Array.isArray(this.code) && Object.prototype.toString.call(this.code) === '[object Object]' && Object.keys(Object(this.code)).length === 0)))) {
       throw new Error('PAYMENT_MD_001: El dato maestro requiere un código');
     }
 
     // Rule: master-data-category-required
     // Todo dato maestro debe pertenecer a una categoría.
-    if (!((this.category !== undefined && this.category !== null && this.category !== ''))) {
+    if (!(!(this.category === undefined || this.category === null || (typeof this.category === 'string' && String(this.category).trim() === '') || (Array.isArray(this.category) && this.category.length === 0) || (typeof this.category === 'object' && !Array.isArray(this.category) && Object.prototype.toString.call(this.category) === '[object Object]' && Object.keys(Object(this.category)).length === 0)))) {
       throw new Error('PAYMENT_MD_002: El dato maestro requiere una categoría');
     }
   }

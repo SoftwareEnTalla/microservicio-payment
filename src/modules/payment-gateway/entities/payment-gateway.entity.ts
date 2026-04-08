@@ -255,14 +255,8 @@ export class PaymentGateway extends BaseEntity {
   protected executeDslLifecycle(): void {
     // Rule: gateway-must-have-provider-type
     // Toda pasarela debe tener un proveedor definido.
-    if (!((this.providerType !== undefined && this.providerType !== null && this.providerType !== ''))) {
+    if (!(!(this.providerType === undefined || this.providerType === null || (typeof this.providerType === 'string' && String(this.providerType).trim() === '') || (Array.isArray(this.providerType) && this.providerType.length === 0) || (typeof this.providerType === 'object' && !Array.isArray(this.providerType) && Object.prototype.toString.call(this.providerType) === '[object Object]' && Object.keys(Object(this.providerType)).length === 0)))) {
       throw new Error('PAYMENT_GATEWAY_001: La pasarela requiere un proveedor definido');
-    }
-
-    // Rule: active-gateway-requires-supported-methods
-    // Una pasarela activa debe declarar métodos de pago soportados.
-    if (!(this.status === 'ACTIVE' && !(this.supportedPaymentMethods === undefined || this.supportedPaymentMethods === null || (typeof this.supportedPaymentMethods === 'string' && String(this.supportedPaymentMethods).trim() === '') || (Array.isArray(this.supportedPaymentMethods) && this.supportedPaymentMethods.length === 0) || (typeof this.supportedPaymentMethods === 'object' && !Array.isArray(this.supportedPaymentMethods) && Object.prototype.toString.call(this.supportedPaymentMethods) === '[object Object]' && Object.keys(Object(this.supportedPaymentMethods)).length === 0)))) {
-      console.warn('PAYMENT_GATEWAY_002: Las pasarelas activas deben definir métodos de pago soportados');
     }
   }
 

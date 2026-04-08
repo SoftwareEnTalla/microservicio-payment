@@ -246,10 +246,6 @@ export class PaymentAttempt extends BaseEntity {
     if (!(this.attemptNumber > 0)) {
       throw new Error('PAYMENT_ATTEMPT_001: El número del intento debe ser mayor que cero');
     }
-
-    // Rule: failed-attempt-emits-domain-event
-    // Cuando un intento falla debe emitirse un evento de fallo.
-    // TODO DSL emit-event: payment-failed
   }
 
   // Relación con BaseEntity (opcional, si aplica)
