@@ -261,7 +261,7 @@ export class PaymentGateway extends BaseEntity {
 
     // Rule: active-gateway-requires-supported-methods
     // Una pasarela activa debe declarar métodos de pago soportados.
-    if (!(this.status === 'ACTIVE' && !(this.supportedPaymentMethods === undefined || this.supportedPaymentMethods === null || (typeof this.supportedPaymentMethods === 'string' && String(this.supportedPaymentMethods).trim() === '') || (Array.isArray(this.supportedPaymentMethods) && this.supportedPaymentMethods.length === 0) || (typeof this.supportedPaymentMethods === 'object' && !Array.isArray(this.supportedPaymentMethods) && Object.keys((this.supportedPaymentMethods ?? {}) as Record<string, unknown>).length === 0)))) {
+    if (!(this.status === 'ACTIVE' && !(this.supportedPaymentMethods === undefined || this.supportedPaymentMethods === null || (typeof this.supportedPaymentMethods === 'string' && String(this.supportedPaymentMethods).trim() === '') || (Array.isArray(this.supportedPaymentMethods) && this.supportedPaymentMethods.length === 0) || (typeof this.supportedPaymentMethods === 'object' && !Array.isArray(this.supportedPaymentMethods) && Object.prototype.toString.call(this.supportedPaymentMethods) === '[object Object]' && Object.keys(Object(this.supportedPaymentMethods)).length === 0)))) {
       console.warn('PAYMENT_GATEWAY_002: Las pasarelas activas deben definir métodos de pago soportados');
     }
   }
