@@ -29,6 +29,7 @@
  */
 
 import { InputType, Field, Float, Int, ObjectType } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -254,7 +255,7 @@ export class BasePaymentGatewayDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Monedas soportadas por la pasarela', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Monedas soportadas por la pasarela', nullable: true })
   supportedCurrencies?: Record<string, any> = {};
 
   @ApiProperty({
@@ -264,7 +265,7 @@ export class BasePaymentGatewayDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Métodos de pago soportados', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Métodos de pago soportados', nullable: true })
   supportedPaymentMethods?: Record<string, any> = {};
 
   @ApiProperty({
@@ -274,7 +275,7 @@ export class BasePaymentGatewayDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Metadatos de configuración de la pasarela', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Metadatos de configuración de la pasarela', nullable: true })
   metadata?: Record<string, any> = {};
 
   // Constructor

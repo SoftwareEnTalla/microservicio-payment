@@ -34,6 +34,7 @@ import { CreatePaymentGatewayDto, UpdatePaymentGatewayDto, DeletePaymentGatewayD
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
+import GraphQLJSON from 'graphql-type-json';
 import { plainToInstance } from 'class-transformer';
 
 
@@ -226,7 +227,7 @@ export class PaymentGateway extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Monedas soportadas por la pasarela', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Monedas soportadas por la pasarela', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Monedas soportadas por la pasarela' })
   supportedCurrencies?: Record<string, any> = {};
 
@@ -237,7 +238,7 @@ export class PaymentGateway extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Métodos de pago soportados', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Métodos de pago soportados', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Métodos de pago soportados' })
   supportedPaymentMethods?: Record<string, any> = {};
 
@@ -248,7 +249,7 @@ export class PaymentGateway extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Metadatos de configuración de la pasarela', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Metadatos de configuración de la pasarela', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Metadatos de configuración de la pasarela' })
   metadata?: Record<string, any> = {};
 
