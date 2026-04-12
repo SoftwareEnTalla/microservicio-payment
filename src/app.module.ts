@@ -40,6 +40,7 @@ import { AppDataSource, initializeDatabase } from "./data-source";
 import { PaymentQueryController } from "./modules/payment/controllers/paymentquery.controller";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
+import GraphQLJSON from "graphql-type-json";
 import { PaymentCommandService } from "./modules/payment/services/paymentcommand.service";
 import { PaymentQueryService } from "./modules/payment/services/paymentquery.service";
 import { CacheModule } from "@nestjs/cache-manager";
@@ -50,14 +51,18 @@ import LoggerService, { logger } from "@core/logs/logger";
 import { PaymentAttemptModule } from "./modules/payment-attempt/modules/paymentattempt.module";
 import { PaymentAttemptCommandService } from "./modules/payment-attempt/services/paymentattemptcommand.service";
 import { PaymentAttemptQueryService } from "./modules/payment-attempt/services/paymentattemptquery.service";
+import { PaymentCustomerGatewayEligibilityModule } from "./modules/payment-customer-gateway-eligibility/modules/paymentcustomergatewayeligibility.module";
+import { PaymentCustomerGatewayEligibilityCommandService } from "./modules/payment-customer-gateway-eligibility/services/paymentcustomergatewayeligibilitycommand.service";
+import { PaymentCustomerGatewayEligibilityQueryService } from "./modules/payment-customer-gateway-eligibility/services/paymentcustomergatewayeligibilityquery.service";
 import { PaymentGatewayModule } from "./modules/payment-gateway/modules/paymentgateway.module";
 import { PaymentGatewayCommandService } from "./modules/payment-gateway/services/paymentgatewaycommand.service";
 import { PaymentGatewayQueryService } from "./modules/payment-gateway/services/paymentgatewayquery.service";
 import { PaymentMasterDataModule } from "./modules/payment-master-data/modules/paymentmasterdata.module";
 import { PaymentMasterDataCommandService } from "./modules/payment-master-data/services/paymentmasterdatacommand.service";
 import { PaymentMasterDataQueryService } from "./modules/payment-master-data/services/paymentmasterdataquery.service";
-
-//import GraphQLJSON from "graphql-type-json";
+import { PaymentMerchantGatewayEligibilityModule } from "./modules/payment-merchant-gateway-eligibility/modules/paymentmerchantgatewayeligibility.module";
+import { PaymentMerchantGatewayEligibilityCommandService } from "./modules/payment-merchant-gateway-eligibility/services/paymentmerchantgatewayeligibilitycommand.service";
+import { PaymentMerchantGatewayEligibilityQueryService } from "./modules/payment-merchant-gateway-eligibility/services/paymentmerchantgatewayeligibilityquery.service";
 
 /*
 //TODO unused for while dependencies
@@ -122,8 +127,10 @@ import LoggerService, { logger } from "@core/logs/logger";
     CqrsModule,
     PaymentModule,
         PaymentAttemptModule,
+    PaymentCustomerGatewayEligibilityModule,
     PaymentGatewayModule,
-    PaymentMasterDataModule,    
+    PaymentMasterDataModule,
+    PaymentMerchantGatewayEligibilityModule,    
     /**
      * Módulo Logger de la aplicación
      */
@@ -138,6 +145,7 @@ import LoggerService, { logger } from "@core/logs/logger";
             buildSchemaOptions: {
               dateScalarMode: "timestamp",
             },
+            resolvers: { JSON: GraphQLJSON },
           }),
         ]
       : []),
@@ -210,10 +218,14 @@ export class PaymentAppModule implements OnModuleInit {
       PaymentQueryService,
       PaymentAttemptCommandService,
       PaymentAttemptQueryService,
+      PaymentCustomerGatewayEligibilityCommandService,
+      PaymentCustomerGatewayEligibilityQueryService,
       PaymentGatewayCommandService,
       PaymentGatewayQueryService,
       PaymentMasterDataCommandService,
-      PaymentMasterDataQueryService,    
+      PaymentMasterDataQueryService,
+      PaymentMerchantGatewayEligibilityCommandService,
+      PaymentMerchantGatewayEligibilityQueryService,    
     ]);
     const loggerService = ServiceRegistry.getInstance().get(
       "LoggerService"
