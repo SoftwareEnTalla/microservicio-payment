@@ -27,14 +27,31 @@
  *
  *
  */
-export * from "./paymentdeleted.event"; 
-export * from "./paymentcreated.event";
-export * from "./paymentupdated.event";
-export * from "./paymentsucceeded.event";
-export * from "./customergatewayonboardingstarted.event";
-export * from "./customergatewayonboardingapproved.event";
-export * from "./customergatewayonboardingrejected.event";
-export * from "./customergatewayonboardingexpired.event";
-export * from "./event-registry";
-export * from "./base.event";
-export * from "./payment-failed.event";
+
+
+import { BaseEvent, PayloadEvent } from './base.event';
+import { v4 as uuidv4 } from "uuid";
+
+export class CustomerGatewayOnboardingRejectedEvent extends BaseEvent {
+  constructor(
+    public readonly aggregateId: string,
+    public readonly payload: PayloadEvent<any>
+  ) {
+    super(aggregateId);
+  }
+
+  static create(
+    instanceId: string,
+    instance: any,
+    userId: string,
+    correlationId?: string
+  ): CustomerGatewayOnboardingRejectedEvent {
+    return new CustomerGatewayOnboardingRejectedEvent(instanceId, {
+      instance,
+      metadata: {
+        initiatedBy: userId,
+        correlationId: correlationId || uuidv4(),
+      },
+    });
+  }
+}

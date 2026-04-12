@@ -52,7 +52,10 @@ import { GetPaymentByIdHandler } from "../queries/handlers/getpaymentbyid.handle
 import { GetPaymentByFieldHandler } from "../queries/handlers/getpaymentbyfield.handler";
 import { GetAllPaymentHandler } from "../queries/handlers/getallpayment.handler";
 import { PaymentCrudSaga } from "../sagas/payment-crud.saga";
-import { EVENT_TOPICS } from "../events/event-registry";
+import { PaymentOnboardingStartedSyncSaga } from "../sagas/payment-onboarding-started-sync.saga";
+import { PaymentOnboardingApprovedSyncSaga } from "../sagas/payment-onboarding-approved-sync.saga";
+import { PaymentOnboardingRejectedSyncSaga } from "../sagas/payment-onboarding-rejected-sync.saga";
+import { PaymentOnboardingExpiredSyncSaga } from "../sagas/payment-onboarding-expired-sync.saga";import { EVENT_TOPICS } from "../events/event-registry";
 
 //Interceptors
 import { PaymentInterceptor } from "../interceptors/payment.interceptor";
@@ -93,7 +96,10 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
     GetPaymentByFieldHandler,
     GetAllPaymentHandler,
     PaymentCrudSaga,
-    //Configurations
+    PaymentOnboardingStartedSyncSaga,
+    PaymentOnboardingApprovedSyncSaga,
+    PaymentOnboardingRejectedSyncSaga,
+    PaymentOnboardingExpiredSyncSaga,    //Configurations
     {
       provide: 'EVENT_SOURCING_CONFIG',
       useFactory: () => ({

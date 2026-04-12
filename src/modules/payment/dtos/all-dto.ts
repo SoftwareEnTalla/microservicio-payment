@@ -29,6 +29,7 @@
  */
 
 import { InputType, Field, Float, Int, ObjectType } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -264,7 +265,7 @@ export class BasePaymentDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Metadatos adicionales del pago', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Metadatos adicionales del pago', nullable: true })
   metadata?: Record<string, any> = {};
 
   @ApiProperty({
