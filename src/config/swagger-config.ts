@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026 SoftwarEnTalla
+ * Copyright (c) 2025 SoftwarEnTalla
  * Licencia: MIT
  * Contacto: softwarentalla@gmail.com
  * CEOs: 
@@ -29,12 +29,7 @@
  */
 
 
-import { PaymentModule } from "@modules/payment/modules/payment.module";
-import { PaymentAttemptModule } from "@modules/payment-attempt/modules/paymentattempt.module";
-import { PaymentCustomerGatewayEligibilityModule } from "@modules/payment-customer-gateway-eligibility/modules/paymentcustomergatewayeligibility.module";
-import { PaymentGatewayModule } from "@modules/payment-gateway/modules/paymentgateway.module";
-import { PaymentMasterDataModule } from "@modules/payment-master-data/modules/paymentmasterdata.module";
-import { PaymentMerchantGatewayEligibilityModule } from "@modules/payment-merchant-gateway-eligibility/modules/paymentmerchantgatewayeligibility.module";
+import { CodetraceModule } from "@modules/codetrace/modules/codetrace.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { logger } from '@core/logs/logger';
 
@@ -43,19 +38,18 @@ import { logger } from '@core/logs/logger';
 export function setupSwagger(
   app,
   apiDoc: string = "api-docs",
-  title: string = "Payment Service API",
-  description: string = "API completa para gestión de Payments con documentación automática",
+  title: string = "Codetrace Service API",
+  description: string = "API completa para gestión de Codetraces con documentación automática",
   version: string = "1.0"
 ): string {
 try{
-  const localPort = String(process.env.PORT || "3000");
       const swaggerConfig = new DocumentBuilder()
         .setTitle(title)
         .setDescription(description)
         .setVersion(version)
         // Organiza por módulos/funcionalidades
         //.addTag("Authentication", "Operaciones de autenticación y usuarios")
-        //.addTag("Payments", "Gestión de transacciones y procesamiento de payments")
+        //.addTag("Codetraces", "Gestión de transacciones y procesamiento de codetraces")
         //.addTag("Subscriptions", "Manejo de suscripciones recurrentes")
         //.addTag("Webhooks", "Endpoints para integraciones externas")
         //.addTag("Reports", "Generación de reportes y analytics")
@@ -74,15 +68,11 @@ try{
         // Servidores (para diferentes entornos)
         .addServer("https://api.production.com", "Production")
         .addServer("https://api.staging.com", "Staging")
-        .addServer("http://localhost:" + localPort, "Local Development")
+        .addServer("http://localhost:3000", "Local Development")
         .build();
 
       const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
-        include: [PaymentModule,         PaymentAttemptModule,
-        PaymentCustomerGatewayEligibilityModule,
-        PaymentGatewayModule,
-        PaymentMasterDataModule,
-        PaymentMerchantGatewayEligibilityModule,/*, AuthModule, ReportsModule*/], // Lista todos los módulos
+        include: [CodetraceModule /*, AuthModule, ReportsModule*/], // Lista todos los módulos
         deepScanRoutes: true, // Escanea en profundidad
         ignoreGlobalPrefix: false, // Considera el prefijo global (api/)
         extraModels: [], // Añade esto
@@ -104,7 +94,7 @@ try{
           displayRequestDuration: true,
         },
         customCss: ".swagger-ui .topbar { background-color: #2c3e50; }", // Personalización
-        customSiteTitle: "Payment API Docs",
+        customSiteTitle: "Codetrace API Docs",
         customfavIcon: "/favicon.ico",
       });
   }
