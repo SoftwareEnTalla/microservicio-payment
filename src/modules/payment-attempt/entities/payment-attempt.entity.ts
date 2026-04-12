@@ -34,6 +34,7 @@ import { CreatePaymentAttemptDto, UpdatePaymentAttemptDto, DeletePaymentAttemptD
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
+import GraphQLJSON from 'graphql-type-json';
 import { plainToInstance } from 'class-transformer';
 import { Payment } from '../../payment/entities/payment.entity';
 import { PaymentGateway } from '../../payment-gateway/entities/payment-gateway.entity';
@@ -216,7 +217,7 @@ export class PaymentAttempt extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Metadatos del intento', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Metadatos del intento', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Metadatos del intento' })
   metadata?: Record<string, any> = {};
 
