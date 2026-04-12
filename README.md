@@ -4,6 +4,25 @@
 
 **Author**: Ing. Persy Morell Guerra e Ing. Dailyn García Dominguez (SoftwarEnTalla CEO)
 
+## Contexto funcional reciente
+
+`payment-service` ahora mantiene proyecciones locales para decidir elegibilidad de pasarela sin consultas síncronas obligatorias a otros bounded contexts.
+
+Módulos relevantes:
+
+- `payment-merchant-gateway-eligibility`
+- `payment-customer-gateway-eligibility`
+
+Eventos consumidos:
+
+- `MerchantGatewayConfigActivated`
+- `MerchantGatewayConfigDeactivated`
+- `MerchantGatewayConfigUpdated`
+- `CustomerGatewayOnboardingStarted`
+- `CustomerGatewayOnboardingApproved`
+- `CustomerGatewayOnboardingRejected`
+- `CustomerGatewayOnboardingExpired`
+
 ## Microservice Structure
 
 ```plaintext
