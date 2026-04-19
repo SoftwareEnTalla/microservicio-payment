@@ -47,6 +47,11 @@ import {
   DeletePaymentCustomerGatewayEligibilityCommand
 } from '../commands/exporting.command';
 
+//Logger - Codetrace
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+import { logger } from '@core/logs/logger';
+
 @Injectable()
 export class PaymentCustomerGatewayEligibilityCrudSaga {
   private readonly logger = new Logger(PaymentCustomerGatewayEligibilityCrudSaga.name);
@@ -63,8 +68,9 @@ export class PaymentCustomerGatewayEligibilityCrudSaga {
       ofType(PaymentCustomerGatewayEligibilityCreatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para creación de PaymentCustomerGatewayEligibility: ${event.aggregateId}`);
-        // Lógica post-creación (ej: enviar notificación)
+        void this.handlePaymentCustomerGatewayEligibilityCreated(event);
       }),
+      map(() => null),
       map(event => {
         // Ejecutar comandos adicionales si es necesario
         return null;
@@ -79,8 +85,9 @@ export class PaymentCustomerGatewayEligibilityCrudSaga {
       ofType(PaymentCustomerGatewayEligibilityUpdatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para actualización de PaymentCustomerGatewayEligibility: ${event.aggregateId}`);
-        // Lógica post-actualización (ej: actualizar caché)
-      })
+        void this.handlePaymentCustomerGatewayEligibilityUpdated(event);
+      }),
+      map(() => null)
     );
   };
 
@@ -91,8 +98,9 @@ export class PaymentCustomerGatewayEligibilityCrudSaga {
       ofType(PaymentCustomerGatewayEligibilityDeletedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para eliminación de PaymentCustomerGatewayEligibility: ${event.aggregateId}`);
-        // Lógica post-eliminación (ej: limpiar relaciones)
+        void this.handlePaymentCustomerGatewayEligibilityDeleted(event);
       }),
+      map(() => null),
       map(event => {
         // Ejemplo: Ejecutar comando de compensación
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
@@ -101,6 +109,78 @@ export class PaymentCustomerGatewayEligibilityCrudSaga {
     );
   };
 
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentCustomerGatewayEligibilityCrudSaga.name)
+      .get(PaymentCustomerGatewayEligibilityCrudSaga.name),
+  })
+  private async handlePaymentCustomerGatewayEligibilityCreated(event: PaymentCustomerGatewayEligibilityCreatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentCustomerGatewayEligibility Created completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentCustomerGatewayEligibilityCrudSaga.name)
+      .get(PaymentCustomerGatewayEligibilityCrudSaga.name),
+  })
+  private async handlePaymentCustomerGatewayEligibilityUpdated(event: PaymentCustomerGatewayEligibilityUpdatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentCustomerGatewayEligibility Updated completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentCustomerGatewayEligibilityCrudSaga.name)
+      .get(PaymentCustomerGatewayEligibilityCrudSaga.name),
+  })
+  private async handlePaymentCustomerGatewayEligibilityDeleted(event: PaymentCustomerGatewayEligibilityDeletedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentCustomerGatewayEligibility Deleted completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

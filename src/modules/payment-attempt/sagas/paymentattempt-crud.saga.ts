@@ -47,6 +47,11 @@ import {
   DeletePaymentAttemptCommand
 } from '../commands/exporting.command';
 
+//Logger - Codetrace
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+import { logger } from '@core/logs/logger';
+
 @Injectable()
 export class PaymentAttemptCrudSaga {
   private readonly logger = new Logger(PaymentAttemptCrudSaga.name);
@@ -63,8 +68,9 @@ export class PaymentAttemptCrudSaga {
       ofType(PaymentAttemptCreatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para creación de PaymentAttempt: ${event.aggregateId}`);
-        // Lógica post-creación (ej: enviar notificación)
+        void this.handlePaymentAttemptCreated(event);
       }),
+      map(() => null),
       map(event => {
         // Ejecutar comandos adicionales si es necesario
         return null;
@@ -79,8 +85,9 @@ export class PaymentAttemptCrudSaga {
       ofType(PaymentAttemptUpdatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para actualización de PaymentAttempt: ${event.aggregateId}`);
-        // Lógica post-actualización (ej: actualizar caché)
-      })
+        void this.handlePaymentAttemptUpdated(event);
+      }),
+      map(() => null)
     );
   };
 
@@ -91,8 +98,9 @@ export class PaymentAttemptCrudSaga {
       ofType(PaymentAttemptDeletedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para eliminación de PaymentAttempt: ${event.aggregateId}`);
-        // Lógica post-eliminación (ej: limpiar relaciones)
+        void this.handlePaymentAttemptDeleted(event);
       }),
+      map(() => null),
       map(event => {
         // Ejemplo: Ejecutar comando de compensación
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
@@ -111,6 +119,78 @@ export class PaymentAttemptCrudSaga {
       map(() => null)
     );
   };
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentAttemptCrudSaga.name)
+      .get(PaymentAttemptCrudSaga.name),
+  })
+  private async handlePaymentAttemptCreated(event: PaymentAttemptCreatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentAttempt Created completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentAttemptCrudSaga.name)
+      .get(PaymentAttemptCrudSaga.name),
+  })
+  private async handlePaymentAttemptUpdated(event: PaymentAttemptUpdatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentAttempt Updated completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentAttemptCrudSaga.name)
+      .get(PaymentAttemptCrudSaga.name),
+  })
+  private async handlePaymentAttemptDeleted(event: PaymentAttemptDeletedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentAttempt Deleted completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

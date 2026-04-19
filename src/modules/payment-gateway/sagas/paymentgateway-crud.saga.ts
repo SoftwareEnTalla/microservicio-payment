@@ -47,6 +47,11 @@ import {
   DeletePaymentGatewayCommand
 } from '../commands/exporting.command';
 
+//Logger - Codetrace
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+import { logger } from '@core/logs/logger';
+
 @Injectable()
 export class PaymentGatewayCrudSaga {
   private readonly logger = new Logger(PaymentGatewayCrudSaga.name);
@@ -63,8 +68,9 @@ export class PaymentGatewayCrudSaga {
       ofType(PaymentGatewayCreatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para creación de PaymentGateway: ${event.aggregateId}`);
-        // Lógica post-creación (ej: enviar notificación)
+        void this.handlePaymentGatewayCreated(event);
       }),
+      map(() => null),
       map(event => {
         // Ejecutar comandos adicionales si es necesario
         return null;
@@ -79,8 +85,9 @@ export class PaymentGatewayCrudSaga {
       ofType(PaymentGatewayUpdatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para actualización de PaymentGateway: ${event.aggregateId}`);
-        // Lógica post-actualización (ej: actualizar caché)
-      })
+        void this.handlePaymentGatewayUpdated(event);
+      }),
+      map(() => null)
     );
   };
 
@@ -91,8 +98,9 @@ export class PaymentGatewayCrudSaga {
       ofType(PaymentGatewayDeletedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para eliminación de PaymentGateway: ${event.aggregateId}`);
-        // Lógica post-eliminación (ej: limpiar relaciones)
+        void this.handlePaymentGatewayDeleted(event);
       }),
+      map(() => null),
       map(event => {
         // Ejemplo: Ejecutar comando de compensación
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
@@ -101,6 +109,78 @@ export class PaymentGatewayCrudSaga {
     );
   };
 
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentGatewayCrudSaga.name)
+      .get(PaymentGatewayCrudSaga.name),
+  })
+  private async handlePaymentGatewayCreated(event: PaymentGatewayCreatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentGateway Created completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentGatewayCrudSaga.name)
+      .get(PaymentGatewayCrudSaga.name),
+  })
+  private async handlePaymentGatewayUpdated(event: PaymentGatewayUpdatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentGateway Updated completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentGatewayCrudSaga.name)
+      .get(PaymentGatewayCrudSaga.name),
+  })
+  private async handlePaymentGatewayDeleted(event: PaymentGatewayDeletedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga PaymentGateway Deleted completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {
