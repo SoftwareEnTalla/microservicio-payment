@@ -48,6 +48,9 @@ import { LoggingModule } from "./modules/payment/modules/logger.module";
 import { ModuleRef } from "@nestjs/core";
 import { ServiceRegistry } from "@core/service-registry";
 import LoggerService, { logger } from "@core/logs/logger";
+import { CatalogSyncLogModule } from "./modules/catalog-sync-log/modules/catalogsynclog.module";
+import { CatalogSyncLogCommandService } from "./modules/catalog-sync-log/services/catalogsynclogcommand.service";
+import { CatalogSyncLogQueryService } from "./modules/catalog-sync-log/services/catalogsynclogquery.service";
 import { PaymentAttemptModule } from "./modules/payment-attempt/modules/paymentattempt.module";
 import { PaymentAttemptCommandService } from "./modules/payment-attempt/services/paymentattemptcommand.service";
 import { PaymentAttemptQueryService } from "./modules/payment-attempt/services/paymentattemptquery.service";
@@ -126,7 +129,8 @@ import LoggerService, { logger } from "@core/logs/logger";
      */
     CqrsModule,
     PaymentModule,
-        PaymentAttemptModule,
+        CatalogSyncLogModule,
+    PaymentAttemptModule,
     PaymentCustomerGatewayEligibilityModule,
     PaymentGatewayModule,
     PaymentMasterDataModule,
@@ -216,6 +220,8 @@ export class PaymentAppModule implements OnModuleInit {
     ServiceRegistry.getInstance().registryAll([
       PaymentCommandService,
       PaymentQueryService,
+      CatalogSyncLogCommandService,
+      CatalogSyncLogQueryService,
       PaymentAttemptCommandService,
       PaymentAttemptQueryService,
       PaymentCustomerGatewayEligibilityCommandService,
