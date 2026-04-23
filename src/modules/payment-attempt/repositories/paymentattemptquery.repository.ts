@@ -275,15 +275,19 @@ import { logger } from '@core/logs/logger';
       .registerClient(PaymentAttemptRepository.name)
       .get(PaymentAttemptRepository.name),
   })
-    async findOne(where?: Record<string, any>): Promise<PaymentAttempt | null> {
-      const tmp: FindOptionsWhere<PaymentAttempt> = where as FindOptionsWhere<PaymentAttempt>;
-      logger.info('Ready to findOneBy PaymentAttempt on repository with conditions:', tmp);
-      // Si 'where' es undefined o null, puedes manejarlo según tu lógica
-      if (!where) {
+        async findOne(options?: Record<string, any>): Promise<PaymentAttempt | null> {
+      if (!options || Object.keys(options).length === 0) {
         logger.warn('No conditions provided for finding PaymentAttempt.');
-        return null; // O maneja el caso como prefieras
+        return null;
       }
-      logger.info('Ready to findOneBy PaymentAttempt on repository:',tmp);
+      // Soporta tanto 'where plano' como FindOneOptions ({ where, relations, order, select })
+      const isFindOneOptions = 'where' in options || 'relations' in options || 'order' in options || 'select' in options;
+      if (isFindOneOptions) {
+        logger.info('Ready to findOne (FindOneOptions) PaymentAttempt:', options);
+        return this.repository.findOne(options as any);
+      }
+      const tmp: FindOptionsWhere<PaymentAttempt> = options as FindOptionsWhere<PaymentAttempt>;
+      logger.info('Ready to findOneBy PaymentAttempt on repository:', tmp);
       return this.repository.findOneBy(tmp);
     }
 

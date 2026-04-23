@@ -51,6 +51,27 @@ import { PaymentMasterDataDto } from "../dtos/all-dto";
 
 import { logger } from '@core/logs/logger';
 
+
+/**
+ * Parseo tolerante del query param 'where':
+ *  - Si llega como ?where={JSON}, lo parsea a objeto.
+ *  - Si llega como query params planos (?isActive=true) descarta claves
+ *    reservadas de paginación y devuelve el resto como where plano.
+ *  - Nunca devuelve un objeto envuelto en { where: ... } (evita double-wrap).
+ */
+function parseWhereParam(all: Record<string, any> = {}): Record<string, any> {
+  if (!all || typeof all !== "object") return {};
+  const raw = (all as any).where;
+  if (typeof raw === "string" && raw.trim().startsWith("{")) {
+    try { return JSON.parse(raw); } catch { /* fallthrough */ }
+  }
+  if (raw && typeof raw === "object") return raw as Record<string, any>;
+  const reserved = new Set(["where","page","size","sort","order","search","initDate","endDate","options"]);
+  const rest: Record<string, any> = {};
+  for (const k of Object.keys(all)) if (!reserved.has(k)) rest[k] = (all as any)[k];
+  return rest;
+}
+
 @ApiTags("PaymentMasterData Query")
 @Controller("paymentmasterdatas/query")
 export class PaymentMasterDataQueryController {
@@ -92,35 +113,6 @@ export class PaymentMasterDataQueryController {
     }
   }
 
-  @Get(":id")
-  @ApiOperation({ summary: "Get paymentmasterdata by ID" })
-  @ApiResponse({ status: 200, type: PaymentMasterDataResponse<PaymentMasterData> })
-  @ApiResponse({ status: 404, description: "PaymentMasterData not found" })
-  @ApiParam({ name: 'id', required: true, description: 'ID of the paymentmasterdata to retrieve', type: String })
-  @LogExecutionTime({
-    layer: "controller",
-    callback: async (logData, client) => {
-      return await client.send(logData);
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(PaymentMasterDataQueryService.name)
-      .get(PaymentMasterDataQueryService.name),
-  })
-  async findById(@Param("id") id: string): Promise<PaymentMasterDataResponse<PaymentMasterData>> {
-    try {
-      const paymentmasterdata = await this.service.findOne({ where: { id } });
-      if (!paymentmasterdata) {
-        throw new NotFoundException(
-          "PaymentMasterData no encontrado para el id solicitado"
-        );
-      }
-      return paymentmasterdata;
-    } catch (error) {
-      logger.error(error);
-      return Helper.throwCachedError(error);
-    }
-  }
-
   @Get("field/:field") // Asegúrate de que el endpoint esté definido correctamente
   @ApiOperation({ summary: "Find paymentmasterdata by specific field" })
   @ApiQuery({ name: "value", required: true, description: 'Value to search for', type: String }) // Documenta el parámetro de consulta
@@ -141,13 +133,10 @@ export class PaymentMasterDataQueryController {
     @Query() paginationArgs?: PaginationArgs
   ): Promise<PaymentMasterDatasResponse<PaymentMasterData>> {
     try {
-      const entities = await this.service.findAndCount({
-        where: { [field]: value },
-        skip:
-          ((paginationArgs ? paginationArgs.page : 1) - 1) *
-          (paginationArgs ? paginationArgs.size : 25),
-        take: paginationArgs ? paginationArgs.size : 25,
-      });
+      const entities = await this.service.findAndCount(
+        { [field]: value },
+        paginationArgs
+      );
 
       if (!entities) {
         throw new NotFoundException(
@@ -253,7 +242,7 @@ export class PaymentMasterDataQueryController {
       .get(PaymentMasterDataQueryService.name),
   })
   async findAndCount(
-    @Query() where: Record<string, any>={},
+    @Query() all: Record<string, any> = {},
     @Query("page") page?: number,
     @Query("size") size?: number,
     @Query("sort") sort?: string,
@@ -272,10 +261,10 @@ export class PaymentMasterDataQueryController {
         initDate || undefined, // Puede ser undefined si no se proporciona
         endDate || undefined // Puede ser undefined si no se proporciona
       );
-      const entities = await this.service.findAndCount({
-        where: where,
-        paginationArgs: paginationArgs,
-      });
+      const entities = await this.service.findAndCount(
+        parseWhereParam(all),
+        paginationArgs
+      );
 
       if (!entities) {
         throw new NotFoundException(
@@ -303,12 +292,11 @@ export class PaymentMasterDataQueryController {
       .get(PaymentMasterDataQueryService.name),
   })
   async findOne(
-    @Query() where: Record<string, any>={}
+    @Query() all: Record<string, any> = {}
   ): Promise<PaymentMasterDataResponse<PaymentMasterData>> {
     try {
-      const entity = await this.service.findOne({
-        where: where,
-      });
+      const where: Record<string, any> = parseWhereParam(all);
+      const entity = await this.service.findOne(where);
 
       if (!entity) {
         throw new NotFoundException("Entidad PaymentMasterData no encontrada.");
@@ -334,12 +322,11 @@ export class PaymentMasterDataQueryController {
       .get(PaymentMasterDataQueryService.name),
   })
   async findOneOrFail(
-    @Query() where: Record<string, any>={}
+    @Query() all: Record<string, any> = {}
   ): Promise<PaymentMasterDataResponse<PaymentMasterData> | Error> {
     try {
-      const entity = await this.service.findOne({
-        where: where,
-      });
+      const where: Record<string, any> = parseWhereParam(all);
+      const entity = await this.service.findOne(where);
 
       if (!entity) {
         return new NotFoundException("Entidad PaymentMasterData no encontrada.");
@@ -350,6 +337,35 @@ export class PaymentMasterDataQueryController {
       return Helper.throwCachedError(error);
     }
   }
+  @Get(":id")
+  @ApiOperation({ summary: "Get paymentmasterdata by ID" })
+  @ApiResponse({ status: 200, type: PaymentMasterDataResponse<PaymentMasterData> })
+  @ApiResponse({ status: 404, description: "PaymentMasterData not found" })
+  @ApiParam({ name: 'id', required: true, description: 'ID of the paymentmasterdata to retrieve', type: String })
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      return await client.send(logData);
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(PaymentMasterDataQueryService.name)
+      .get(PaymentMasterDataQueryService.name),
+  })
+  async findById(@Param("id") id: string): Promise<PaymentMasterDataResponse<PaymentMasterData>> {
+    try {
+      const paymentmasterdata = await this.service.findOne({ where: { id } });
+      if (!paymentmasterdata) {
+        throw new NotFoundException(
+          "PaymentMasterData no encontrado para el id solicitado"
+        );
+      }
+      return paymentmasterdata;
+    } catch (error) {
+      logger.error(error);
+      return Helper.throwCachedError(error);
+    }
+  }
+
 }
 
 
