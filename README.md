@@ -210,3 +210,20 @@
 | | |____types
 |____utils
 ```
+
+<!-- nomencladores-propios:start -->
+
+## Nomencladores propios
+
+Este microservicio mantiene localmente los siguientes nomencladores (regla §4.9.6 de `docs/help.md` — entidad XML independiente con CRUD CQRS, FK desde agregados padres, seed SQL local idempotente).
+
+| Nomenclador | Modelo DSL | Seed SQL |
+|---|---|---|
+| `payment-status` | [../models/payment/payment-status.xml](../models/payment/payment-status.xml) | [./src/database/postgres-2-payment-status.sql](./src/database/postgres-2-payment-status.sql) |
+| `payment-attempt-status` | [../models/payment/payment-attempt-status.xml](../models/payment/payment-attempt-status.xml) | [./src/database/postgres-3-payment-attempt-status.sql](./src/database/postgres-3-payment-attempt-status.sql) |
+| `payment-method-type` | [../models/payment/payment-method-type.xml](../models/payment/payment-method-type.xml) | [./src/database/postgres-4-payment-method-type.sql](./src/database/postgres-4-payment-method-type.sql) |
+| `card-network` | [../models/payment/card-network.xml](../models/payment/card-network.xml) | [./src/database/postgres-5-card-network.sql](./src/database/postgres-5-card-network.sql) |
+
+Estos nomencladores se siembran automáticamente en cada arranque (`init-order.txt`). Si más adelante un segundo microservicio empieza a consumir alguno, se promueve a `catalog-service` según la regla.
+
+<!-- nomencladores-propios:end -->

@@ -82,6 +82,17 @@ import LoggerService, { logger } from "@core/logs/logger";
 
 */
 
+import { HorizontalModule } from "@common/horizontal";
+
+import { NomencladorListenersModule } from './modules/nomenclador-listeners/nomenclador-listeners.module';
+import { CardNetworkModule } from "./modules/card-network/modules/cardnetwork.module";
+import { IntegrationModeModule } from "./modules/integration-mode/modules/integrationmode.module";
+import { PaymentAttemptStatusModule } from "./modules/payment-attempt-status/modules/paymentattemptstatus.module";
+import { PaymentGatewayStatusModule } from "./modules/payment-gateway-status/modules/paymentgatewaystatus.module";
+import { PaymentMerchantGatewayEligibilityStatusModule } from "./modules/payment-merchant-gateway-eligibility-status/modules/paymentmerchantgatewayeligibilitystatus.module";
+import { PaymentMethodTypeModule } from "./modules/payment-method-type/modules/paymentmethodtype.module";
+import { PaymentStatusModule } from "./modules/payment-status/modules/paymentstatus.module";
+import { ProviderTypeModule } from "./modules/provider-type/modules/providertype.module";
 @Module({
   imports: [
     // Se importa/registra el módulo de caché
@@ -130,6 +141,7 @@ import LoggerService, { logger } from "@core/logs/logger";
      * Módulos Payment de la aplicación
      */
     CqrsModule,
+    HorizontalModule,
     PaymentModule,
         CatalogSyncLogModule,
     PaymentAttemptModule,
@@ -156,6 +168,16 @@ import LoggerService, { logger } from "@core/logs/logger";
           }),
         ]
       : []),
+  
+    NomencladorListenersModule,
+      CardNetworkModule,
+    IntegrationModeModule,
+    PaymentAttemptStatusModule,
+    PaymentGatewayStatusModule,
+    PaymentMerchantGatewayEligibilityStatusModule,
+    PaymentMethodTypeModule,
+    PaymentStatusModule,
+    ProviderTypeModule,
   ],
 
   /**

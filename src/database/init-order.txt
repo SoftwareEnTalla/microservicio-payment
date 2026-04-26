@@ -1,0 +1,9 @@
+postgres-1-catalog-sync-log.sql
+postgres-2-payment-status.sql
+postgres-3-payment-attempt-status.sql
+postgres-4-payment-method-type.sql
+postgres-5-card-network.sql
+postgres-6-provider-type.sql
+postgres-7-payment-gateway-status.sql
+postgres-8-integration-mode.sql
+postgres-9-payment-merchant-gateway-eligibility-status.sql
