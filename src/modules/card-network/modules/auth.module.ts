@@ -30,13 +30,11 @@
 
 
 import { Module } from "@nestjs/common";
-import { CardNetworkCommandController } from "../controllers/cardnetworkcommand.controller";
 import { CardNetworkLoggingInterceptor } from "../interceptors/cardnetwork.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { CardNetworkAuthGuard } from "../guards/cardnetworkauthguard.guard";
 
 @Module({
-  controllers: [CardNetworkCommandController],
   providers: [
     CardNetworkAuthGuard,
     CardNetworkLoggingInterceptor,

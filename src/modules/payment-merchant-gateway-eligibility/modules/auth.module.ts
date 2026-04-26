@@ -30,13 +30,11 @@
 
 
 import { Module } from "@nestjs/common";
-import { PaymentMerchantGatewayEligibilityCommandController } from "../controllers/paymentmerchantgatewayeligibilitycommand.controller";
 import { PaymentMerchantGatewayEligibilityLoggingInterceptor } from "../interceptors/paymentmerchantgatewayeligibility.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { PaymentMerchantGatewayEligibilityAuthGuard } from "../guards/paymentmerchantgatewayeligibilityauthguard.guard";
 
 @Module({
-  controllers: [PaymentMerchantGatewayEligibilityCommandController],
   providers: [
     PaymentMerchantGatewayEligibilityAuthGuard,
     PaymentMerchantGatewayEligibilityLoggingInterceptor,

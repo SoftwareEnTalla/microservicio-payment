@@ -30,13 +30,11 @@
 
 
 import { Module } from "@nestjs/common";
-import { PaymentMasterDataCommandController } from "../controllers/paymentmasterdatacommand.controller";
 import { PaymentMasterDataLoggingInterceptor } from "../interceptors/paymentmasterdata.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { PaymentMasterDataAuthGuard } from "../guards/paymentmasterdataauthguard.guard";
 
 @Module({
-  controllers: [PaymentMasterDataCommandController],
   providers: [
     PaymentMasterDataAuthGuard,
     PaymentMasterDataLoggingInterceptor,

@@ -6,7 +6,7 @@
 -- la regla §4.9.6 de docs/help.md.
 -- Idempotente: INSERT ... ON CONFLICT (code) DO UPDATE.
 -- ════════════════════════════════════════════════════════════════════
-INSERT INTO "card_network_base_entity" ("code", "displayName", "description", "metadata", "createdBy", "active", "type")
+INSERT INTO "card_network_base_entity" ("code", "displayName", "description", "metadata", "createdBy", "isActive", "type")
 VALUES
   ('VISA', 'Visa', 'Red Visa', jsonb_build_object('description','Red Visa'), 'system', TRUE, 'cardnetwork'),
   ('MASTERCARD', 'Mastercard', 'Red Mastercard', jsonb_build_object('description','Red Mastercard'), 'system', TRUE, 'cardnetwork'),
@@ -17,5 +17,5 @@ ON CONFLICT ("code") DO UPDATE SET
   "displayName"      = EXCLUDED."displayName",
   "description"      = EXCLUDED."description",
   "metadata"         = EXCLUDED."metadata",
-  "active"           = TRUE,
+  "isActive"           = TRUE,
   "modificationDate" = NOW();

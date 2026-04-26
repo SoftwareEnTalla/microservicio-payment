@@ -6,7 +6,7 @@
 -- la regla §4.9.6 de docs/help.md.
 -- Idempotente: INSERT ... ON CONFLICT (code) DO UPDATE.
 -- ════════════════════════════════════════════════════════════════════
-INSERT INTO "payment_method_type_base_entity" ("code", "displayName", "description", "metadata", "createdBy", "active", "type")
+INSERT INTO "payment_method_type_base_entity" ("code", "displayName", "description", "metadata", "createdBy", "isActive", "type")
 VALUES
   ('CARD', 'Tarjeta', 'Tarjeta de crédito o débito', jsonb_build_object('description','Tarjeta de crédito o débito'), 'system', TRUE, 'paymentmethodtype'),
   ('WALLET', 'Wallet', 'Wallet digital (Apple/Google Pay, etc.)', jsonb_build_object('description','Wallet digital (Apple/Google Pay, etc.)'), 'system', TRUE, 'paymentmethodtype'),
@@ -17,5 +17,5 @@ ON CONFLICT ("code") DO UPDATE SET
   "displayName"      = EXCLUDED."displayName",
   "description"      = EXCLUDED."description",
   "metadata"         = EXCLUDED."metadata",
-  "active"           = TRUE,
+  "isActive"           = TRUE,
   "modificationDate" = NOW();

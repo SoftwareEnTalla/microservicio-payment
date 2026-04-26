@@ -30,13 +30,11 @@
 
 
 import { Module } from "@nestjs/common";
-import { PaymentMethodTypeCommandController } from "../controllers/paymentmethodtypecommand.controller";
 import { PaymentMethodTypeLoggingInterceptor } from "../interceptors/paymentmethodtype.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { PaymentMethodTypeAuthGuard } from "../guards/paymentmethodtypeauthguard.guard";
 
 @Module({
-  controllers: [PaymentMethodTypeCommandController],
   providers: [
     PaymentMethodTypeAuthGuard,
     PaymentMethodTypeLoggingInterceptor,
