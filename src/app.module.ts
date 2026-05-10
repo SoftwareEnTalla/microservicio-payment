@@ -94,6 +94,7 @@ import { PaymentMethodTypeModule } from "./modules/payment-method-type/modules/p
 import { PaymentStatusModule } from "./modules/payment-status/modules/paymentstatus.module";
 import { ProviderTypeModule } from "./modules/provider-type/modules/providertype.module";
 import { PaymentAccountingSummaryModule } from "./modules/payment-accounting-summary/payment-accounting-summary.module";
+import { PaymentLoyaltyModule } from "./modules/payment-loyalty/payment-loyalty.module";
 @Module({
   imports: [
     // Se importa/registra el módulo de caché
@@ -180,6 +181,7 @@ import { PaymentAccountingSummaryModule } from "./modules/payment-accounting-sum
     PaymentStatusModule,
     ProviderTypeModule,
     PaymentAccountingSummaryModule,
+    PaymentLoyaltyModule,
   ],
 
   /**
