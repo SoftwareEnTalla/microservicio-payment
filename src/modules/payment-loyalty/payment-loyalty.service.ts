@@ -1,8 +1,11 @@
+import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment } from '../payment/entities/payment.entity';
+import { PaymentMerchantGatewayEligibility } from '../payment-merchant-gateway-eligibility/entities/payment-merchant-gateway-eligibility.entity';
 import { PaymentCustomerWallet } from './payment-customer-wallet.entity';
+import { PaymentPayoutRequest } from './payment-payout-request.entity';
 import { PaymentWalletMovement } from './payment-wallet-movement.entity';
 
 interface LoyaltySummaryTotals {
@@ -39,6 +42,48 @@ interface ReferralLevelRow {
   distinctBeneficiaries: number;
 }
 
+interface PayoutSummaryTotals {
+  totalRequests: number;
+  pendingRequests: number;
+  processedRequests: number;
+  rejectedRequests: number;
+  totalRequestedAmount: number;
+  merchantsInvolved: number;
+  customersInvolved: number;
+  latestRequestedAt?: Date | null;
+}
+
+interface PayoutRequestRow {
+  id: string;
+  walletId: string;
+  customerId: string;
+  merchantId: string;
+  merchantGatewayEligibilityId?: string | null;
+  paymentId?: string | null;
+  orderId?: string | null;
+  requestReference: string;
+  status: string;
+  amount: number;
+  currencyCode: string;
+  preferredCollectionMethod?: string | null;
+  settlementMode?: string | null;
+  notes?: string | null;
+  requestedAt?: Date | null;
+  processedAt?: Date | null;
+  createdAt: Date;
+}
+
+interface CreatePayoutRequestPayload {
+  customerId?: string;
+  merchantId?: string;
+  amount?: number;
+  currencyCode?: string;
+  preferredCollectionMethod?: string;
+  notes?: string;
+  paymentId?: string;
+  orderId?: string;
+}
+
 @Injectable()
 export class PaymentLoyaltyService {
   constructor(
@@ -48,6 +93,10 @@ export class PaymentLoyaltyService {
     private readonly walletRepository: Repository<PaymentCustomerWallet>,
     @InjectRepository(PaymentWalletMovement)
     private readonly movementRepository: Repository<PaymentWalletMovement>,
+    @InjectRepository(PaymentPayoutRequest)
+    private readonly payoutRequestRepository: Repository<PaymentPayoutRequest>,
+    @InjectRepository(PaymentMerchantGatewayEligibility)
+    private readonly merchantEligibilityRepository: Repository<PaymentMerchantGatewayEligibility>,
   ) {}
 
   async getSummary(limit = 8): Promise<Record<string, unknown>> {
@@ -233,6 +282,196 @@ export class PaymentLoyaltyService {
     };
   }
 
+  async getPayoutSummary(limit = 8): Promise<Record<string, unknown>> {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 20) : 8;
+    const [totalsRaw, latestRequests] = await Promise.all([
+      this.payoutRequestRepository
+        .createQueryBuilder('request')
+        .select('COUNT(*)', 'totalRequests')
+        .addSelect("COUNT(*) FILTER (WHERE request.status = 'REQUESTED')", 'pendingRequests')
+        .addSelect("COUNT(*) FILTER (WHERE request.status = 'SETTLED')", 'processedRequests')
+        .addSelect("COUNT(*) FILTER (WHERE request.status = 'REJECTED')", 'rejectedRequests')
+        .addSelect('COALESCE(SUM(COALESCE(request.amount, 0)), 0)', 'totalRequestedAmount')
+        .addSelect('COUNT(DISTINCT request."merchantId")', 'merchantsInvolved')
+        .addSelect('COUNT(DISTINCT request."customerId")', 'customersInvolved')
+        .addSelect('MAX(COALESCE(request."requestedAt", request."createdAt"))', 'latestRequestedAt')
+        .getRawOne<Record<string, string | number | null> | undefined>(),
+      this.payoutRequestRepository.find({
+        order: { createdAt: 'DESC' },
+        take: safeLimit,
+      }),
+    ]);
+
+    const totals: PayoutSummaryTotals = {
+      totalRequests: Number(totalsRaw?.totalRequests ?? 0),
+      pendingRequests: Number(totalsRaw?.pendingRequests ?? 0),
+      processedRequests: Number(totalsRaw?.processedRequests ?? 0),
+      rejectedRequests: Number(totalsRaw?.rejectedRequests ?? 0),
+      totalRequestedAmount: Number(totalsRaw?.totalRequestedAmount ?? 0),
+      merchantsInvolved: Number(totalsRaw?.merchantsInvolved ?? 0),
+      customersInvolved: Number(totalsRaw?.customersInvolved ?? 0),
+      latestRequestedAt: (totalsRaw?.latestRequestedAt as Date | null | undefined) ?? null,
+    };
+
+    return {
+      ok: true,
+      message: 'Resumen táctico de payout requests obtenido con éxito.',
+      data: {
+        totals,
+        latest: latestRequests.map((request): PayoutRequestRow => this.mapPayoutRequest(request)),
+      },
+      count: latestRequests.length,
+    };
+  }
+
+  async listPayoutRequests(limit = 10): Promise<Record<string, unknown>> {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 30) : 10;
+    const requests = await this.payoutRequestRepository.find({
+      order: { createdAt: 'DESC' },
+      take: safeLimit,
+    });
+
+    return {
+      ok: true,
+      message: 'Payout requests obtenidos con éxito.',
+      data: {
+        latest: requests.map((request): PayoutRequestRow => this.mapPayoutRequest(request)),
+      },
+      count: requests.length,
+    };
+  }
+
+  async createPayoutRequest(payload: CreatePayoutRequestPayload): Promise<Record<string, unknown>> {
+    const customerId = String(payload.customerId || '').trim();
+    const merchantId = String(payload.merchantId || '').trim();
+    const amount = Number(payload.amount ?? 0);
+    const currencyCode = String(payload.currencyCode || 'USD').trim().toUpperCase();
+    const preferredCollectionMethod = String(payload.preferredCollectionMethod || '').trim() || null;
+    const notes = String(payload.notes || '').trim() || null;
+
+    if (!customerId) {
+      throw new BadRequestException('customerId es obligatorio para crear un payout request');
+    }
+    if (!merchantId) {
+      throw new BadRequestException('merchantId es obligatorio para crear un payout request');
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException('amount debe ser un número positivo');
+    }
+
+    const eligibility = await this.merchantEligibilityRepository.findOne({
+      where: { merchantId, isActive: true, status: 'ACTIVE' },
+      order: { creationDate: 'DESC' },
+    });
+    if (!eligibility) {
+      throw new BadRequestException('El merchant no tiene una elegibilidad activa en payment para procesar payouts');
+    }
+
+    const result = await this.walletRepository.manager.transaction(async (manager) => {
+      const walletRepository = manager.getRepository(PaymentCustomerWallet);
+      const movementRepository = manager.getRepository(PaymentWalletMovement);
+      const payoutRequestRepository = manager.getRepository(PaymentPayoutRequest);
+
+      const wallet = await this.getOrCreateWalletWithRepository(walletRepository, customerId);
+      const currentWithdrawable = Number(wallet.withdrawableBalance ?? 0);
+      if (currentWithdrawable < amount) {
+        throw new BadRequestException(
+          `Saldo withdrawable insuficiente. Disponible ${currentWithdrawable.toFixed(2)}, solicitado ${amount.toFixed(2)}`,
+        );
+      }
+
+      wallet.withdrawableBalance = currentWithdrawable - amount;
+      wallet.lastMovementAt = new Date();
+      await walletRepository.save(wallet);
+
+      const requestReference = `payout:${merchantId}:${customerId}:${randomUUID()}`;
+      const payoutRequest = await payoutRequestRepository.save(
+        payoutRequestRepository.create({
+          walletId: wallet.id,
+          customerId,
+          merchantId,
+          merchantGatewayEligibilityId: eligibility.id,
+          paymentId: payload.paymentId || null,
+          orderId: payload.orderId || null,
+          requestReference,
+          status: 'REQUESTED',
+          amount,
+          currencyCode,
+          preferredCollectionMethod,
+          settlementMode: eligibility.settlementMode || 'AUTOMATIC',
+          notes,
+          requestedAt: new Date(),
+          metadata: {
+            gatewayId: eligibility.gatewayId,
+            eligibilityStatus: eligibility.status,
+            settlementMode: eligibility.settlementMode || 'AUTOMATIC',
+            acceptedPaymentMethodTypes: eligibility.acceptedPaymentMethodTypes || {},
+            source: 'payment-loyalty',
+          },
+        }),
+      );
+
+      const movement = await movementRepository.save(
+        movementRepository.create({
+          walletId: wallet.id,
+          customerId,
+          paymentId: payload.paymentId || null,
+          orderId: payload.orderId || null,
+          movementKey: `payout-request:${payoutRequest.id}`,
+          movementType: 'PAYOUT_REQUESTED',
+          balanceBucket: 'WITHDRAWABLE',
+          status: 'RESERVED',
+          amount: -amount,
+          description: `Payout request ${requestReference} reservado para merchant ${merchantId}`,
+          metadata: {
+            payoutRequestId: payoutRequest.id,
+            payoutRequestReference: requestReference,
+            merchantId,
+            settlementMode: payoutRequest.settlementMode,
+            preferredCollectionMethod,
+            source: 'payment-loyalty',
+          },
+        }),
+      );
+
+      return {
+        wallet,
+        payoutRequest,
+        movement,
+      };
+    });
+
+    return {
+      ok: true,
+      message: 'Payout request creado con éxito y saldo withdrawable reservado.',
+      data: {
+        wallet: {
+          id: result.wallet.id,
+          customerId: result.wallet.customerId,
+          cashbackBalance: Number(result.wallet.cashbackBalance ?? 0),
+          withdrawableBalance: Number(result.wallet.withdrawableBalance ?? 0),
+          totalEarnedCashback: Number(result.wallet.totalEarnedCashback ?? 0),
+          totalEarnedReferral: Number(result.wallet.totalEarnedReferral ?? 0),
+          lastMovementAt: result.wallet.lastMovementAt,
+        },
+        payoutRequest: this.mapPayoutRequest(result.payoutRequest),
+        movement: {
+          id: result.movement.id,
+          walletId: result.movement.walletId,
+          customerId: result.movement.customerId,
+          paymentId: result.movement.paymentId,
+          orderId: result.movement.orderId,
+          movementType: result.movement.movementType,
+          balanceBucket: result.movement.balanceBucket,
+          status: result.movement.status,
+          amount: Number(result.movement.amount ?? 0),
+          description: result.movement.description,
+          createdAt: result.movement.createdAt,
+        },
+      },
+    };
+  }
+
   async settleCashback(paymentId: string): Promise<Record<string, unknown>> {
     const payment = await this.paymentRepository.findOne({ where: { id: paymentId } });
     if (!payment) {
@@ -372,22 +611,7 @@ export class PaymentLoyaltyService {
   }
 
   private async getOrCreateWallet(customerId: string): Promise<PaymentCustomerWallet> {
-    const existingWallet = await this.walletRepository.findOne({ where: { customerId } });
-    if (existingWallet) {
-      return existingWallet;
-    }
-
-    return this.walletRepository.save(
-      this.walletRepository.create({
-        customerId,
-        cashbackBalance: 0,
-        withdrawableBalance: 0,
-        totalEarnedCashback: 0,
-        totalEarnedReferral: 0,
-        lastMovementAt: null,
-        metadata: { source: 'payment-loyalty' },
-      }),
-    );
+    return this.getOrCreateWalletWithRepository(this.walletRepository, customerId);
   }
 
   private mergeAccountingStatus(currentStatus: string | null | undefined, newFragment: string): string {
@@ -399,5 +623,49 @@ export class PaymentLoyaltyService {
       return normalized;
     }
     return `${normalized}+${newFragment}`;
+  }
+
+  private async getOrCreateWalletWithRepository(
+    walletRepository: Repository<PaymentCustomerWallet>,
+    customerId: string,
+  ): Promise<PaymentCustomerWallet> {
+    const existingWallet = await walletRepository.findOne({ where: { customerId } });
+    if (existingWallet) {
+      return existingWallet;
+    }
+
+    return walletRepository.save(
+      walletRepository.create({
+        customerId,
+        cashbackBalance: 0,
+        withdrawableBalance: 0,
+        totalEarnedCashback: 0,
+        totalEarnedReferral: 0,
+        lastMovementAt: null,
+        metadata: { source: 'payment-loyalty' },
+      }),
+    );
+  }
+
+  private mapPayoutRequest(request: PaymentPayoutRequest): PayoutRequestRow {
+    return {
+      id: request.id,
+      walletId: request.walletId,
+      customerId: request.customerId,
+      merchantId: request.merchantId,
+      merchantGatewayEligibilityId: request.merchantGatewayEligibilityId ?? null,
+      paymentId: request.paymentId ?? null,
+      orderId: request.orderId ?? null,
+      requestReference: request.requestReference,
+      status: request.status,
+      amount: Number(request.amount ?? 0),
+      currencyCode: request.currencyCode,
+      preferredCollectionMethod: request.preferredCollectionMethod ?? null,
+      settlementMode: request.settlementMode ?? null,
+      notes: request.notes ?? null,
+      requestedAt: request.requestedAt ?? null,
+      processedAt: request.processedAt ?? null,
+      createdAt: request.createdAt,
+    };
   }
 }

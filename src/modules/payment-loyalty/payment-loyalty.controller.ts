@@ -33,6 +33,22 @@ export class PaymentLoyaltyController {
     return this.service.getReferralSummary(Number(limit || 8));
   }
 
+  @Get('payouts/summary')
+  @ApiOperation({ summary: 'Resumen táctico de payout requests y retiros withdrawable' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Resumen táctico de payouts obtenido.' })
+  async getPayoutSummary(@Query('limit') limit?: string): Promise<Record<string, unknown>> {
+    return this.service.getPayoutSummary(Number(limit || 8));
+  }
+
+  @Get('payouts/requests')
+  @ApiOperation({ summary: 'Listado táctico de payout requests' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Payout requests obtenidos.' })
+  async listPayoutRequests(@Query('limit') limit?: string): Promise<Record<string, unknown>> {
+    return this.service.listPayoutRequests(Number(limit || 10));
+  }
+
   @Get('wallet/:customerId')
   @ApiOperation({ summary: 'Detalle de wallet por customer' })
   @ApiParam({ name: 'customerId', type: String })
@@ -73,5 +89,40 @@ export class PaymentLoyaltyController {
     @Body() payload: { beneficiaryCustomerId?: string; level?: number; referenceCode?: string },
   ): Promise<Record<string, unknown>> {
     return this.service.settleReferral(paymentId, payload || {});
+  }
+
+  @Post('payouts/request')
+  @ApiOperation({ summary: 'Crea un payout request debitando saldo withdrawable del wallet' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        customerId: { type: 'string', format: 'uuid' },
+        merchantId: { type: 'string', format: 'uuid' },
+        amount: { type: 'number', example: 25.5 },
+        currencyCode: { type: 'string', example: 'USD' },
+        preferredCollectionMethod: { type: 'string', example: 'BANK_TRANSFER' },
+        notes: { type: 'string', example: 'Primer retiro loyalty' },
+        paymentId: { type: 'string', format: 'uuid' },
+        orderId: { type: 'string', format: 'uuid' },
+      },
+      required: ['customerId', 'merchantId', 'amount'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Payout request creado con éxito.' })
+  async createPayoutRequest(
+    @Body()
+    payload: {
+      customerId?: string;
+      merchantId?: string;
+      amount?: number;
+      currencyCode?: string;
+      preferredCollectionMethod?: string;
+      notes?: string;
+      paymentId?: string;
+      orderId?: string;
+    },
+  ): Promise<Record<string, unknown>> {
+    return this.service.createPayoutRequest(payload || {});
   }
 }
