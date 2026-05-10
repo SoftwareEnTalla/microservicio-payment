@@ -138,6 +138,83 @@ export class Payment extends BaseEntity {
   amount!: number;
 
   @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Monto asignado como ingreso de plataforma',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto asignado como ingreso de plataforma', nullable: false })
+  @Column({ type: 'decimal', nullable: false, precision: 14, scale: 2, default: 0, comment: 'Monto asignado como ingreso de plataforma' })
+  platformAmount!: number;
+
+  @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Monto reservado para cashback',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto reservado para cashback', nullable: false })
+  @Column({ type: 'decimal', nullable: false, precision: 14, scale: 2, default: 0, comment: 'Monto reservado para cashback' })
+  cashbackAmount!: number;
+
+  @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Monto reservado para referidos o comisión multinivel',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto reservado para referidos o comisión multinivel', nullable: false })
+  @Column({ type: 'decimal', nullable: false, precision: 14, scale: 2, default: 0, comment: 'Monto reservado para referidos o comisión multinivel' })
+  referralAmount!: number;
+
+  @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Costo transaccional del gateway o fee financiero',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Costo transaccional del gateway o fee financiero', nullable: false })
+  @Column({ type: 'decimal', nullable: false, precision: 14, scale: 2, default: 0, comment: 'Costo transaccional del gateway o fee financiero' })
+  stripeFee!: number;
+
+  @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Monto reintegrado o refund aplicado al pago',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto reintegrado o refund aplicado al pago', nullable: false })
+  @Column({ type: 'decimal', nullable: false, precision: 14, scale: 2, default: 0, comment: 'Monto reintegrado o refund aplicado al pago' })
+  refundAmount!: number;
+
+  @ApiProperty({
+    type: () => Number,
+    nullable: false,
+    description: 'Ingreso neto comercial después de comisiones y fees',
+  })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Ingreso neto comercial después de comisiones y fees', nullable: false })
+  @Column({ type: 'decimal', nullable: false, precision: 14, scale: 2, default: 0, comment: 'Ingreso neto comercial después de comisiones y fees' })
+  netIncome!: number;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Estado del accounting comercial del pago',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Estado del accounting comercial del pago', nullable: false })
+  @Column({ type: 'varchar', nullable: false, length: 50, default: 'PENDING_ALLOCATION', comment: 'Estado del accounting comercial del pago' })
+  accountingStatus!: string;
+
+  @ApiProperty({
     type: () => String,
     nullable: false,
     description: 'Moneda del pago',
@@ -292,6 +369,18 @@ export class Payment extends BaseEntity {
     // Todo pago debe incluir una clave de idempotencia.
     if (!(!(this.idempotencyKey === undefined || this.idempotencyKey === null || (typeof this.idempotencyKey === 'string' && String(this.idempotencyKey).trim() === '') || (Array.isArray(this.idempotencyKey) && this.idempotencyKey.length === 0) || (typeof this.idempotencyKey === 'object' && !Array.isArray(this.idempotencyKey) && Object.prototype.toString.call(this.idempotencyKey) === '[object Object]' && Object.keys(Object(this.idempotencyKey)).length === 0)))) {
       throw new Error('PAYMENT_002: El pago requiere una clave de idempotencia');
+    }
+
+    const accountingValues = [
+      Number(this.platformAmount ?? 0),
+      Number(this.cashbackAmount ?? 0),
+      Number(this.referralAmount ?? 0),
+      Number(this.stripeFee ?? 0),
+      Number(this.refundAmount ?? 0),
+      Number(this.netIncome ?? 0),
+    ];
+    if (accountingValues.some((value) => value < 0)) {
+      throw new Error('PAYMENT_004: Los componentes del accounting no pueden ser negativos');
     }
   }
 

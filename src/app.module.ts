@@ -93,6 +93,7 @@ import { PaymentMerchantGatewayEligibilityStatusModule } from "./modules/payment
 import { PaymentMethodTypeModule } from "./modules/payment-method-type/modules/paymentmethodtype.module";
 import { PaymentStatusModule } from "./modules/payment-status/modules/paymentstatus.module";
 import { ProviderTypeModule } from "./modules/provider-type/modules/providertype.module";
+import { PaymentAccountingSummaryModule } from "./modules/payment-accounting-summary/payment-accounting-summary.module";
 @Module({
   imports: [
     // Se importa/registra el módulo de caché
@@ -178,6 +179,7 @@ import { ProviderTypeModule } from "./modules/provider-type/modules/providertype
     PaymentMethodTypeModule,
     PaymentStatusModule,
     ProviderTypeModule,
+    PaymentAccountingSummaryModule,
   ],
 
   /**

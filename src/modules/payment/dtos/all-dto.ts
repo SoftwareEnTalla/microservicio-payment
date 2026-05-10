@@ -168,6 +168,48 @@ export class BasePaymentDto {
   @Field(() => Float, { description: 'Monto total del pago', nullable: false })
   amount!: number;
 
+  @ApiProperty({ type: () => Number, nullable: false, description: 'Monto asignado como ingreso de plataforma' })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto asignado como ingreso de plataforma', nullable: false })
+  platformAmount: number = 0;
+
+  @ApiProperty({ type: () => Number, nullable: false, description: 'Monto reservado para cashback' })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto reservado para cashback', nullable: false })
+  cashbackAmount: number = 0;
+
+  @ApiProperty({ type: () => Number, nullable: false, description: 'Monto reservado para referidos o comisión multinivel' })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto reservado para referidos o comisión multinivel', nullable: false })
+  referralAmount: number = 0;
+
+  @ApiProperty({ type: () => Number, nullable: false, description: 'Costo transaccional del gateway o fee financiero' })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Costo transaccional del gateway o fee financiero', nullable: false })
+  stripeFee: number = 0;
+
+  @ApiProperty({ type: () => Number, nullable: false, description: 'Monto reintegrado o refund aplicado al pago' })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Monto reintegrado o refund aplicado al pago', nullable: false })
+  refundAmount: number = 0;
+
+  @ApiProperty({ type: () => Number, nullable: false, description: 'Ingreso neto comercial después de comisiones y fees' })
+  @IsNumber()
+  @IsOptional()
+  @Field(() => Float, { description: 'Ingreso neto comercial después de comisiones y fees', nullable: false })
+  netIncome: number = 0;
+
+  @ApiProperty({ type: () => String, nullable: false, description: 'Estado del accounting comercial del pago' })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Estado del accounting comercial del pago', nullable: false })
+  accountingStatus: string = 'PENDING_ALLOCATION';
+
   @ApiProperty({
     type: () => String,
     nullable: false,
