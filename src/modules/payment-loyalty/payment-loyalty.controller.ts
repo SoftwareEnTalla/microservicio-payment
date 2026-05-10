@@ -25,6 +25,14 @@ export class PaymentLoyaltyController {
     return this.service.listWallets(Number(limit || 10));
   }
 
+  @Get('referrals/summary')
+  @ApiOperation({ summary: 'Resumen táctico de referral network y comisiones por nivel' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Referral network obtenido.' })
+  async getReferralSummary(@Query('limit') limit?: string): Promise<Record<string, unknown>> {
+    return this.service.getReferralSummary(Number(limit || 8));
+  }
+
   @Get('wallet/:customerId')
   @ApiOperation({ summary: 'Detalle de wallet por customer' })
   @ApiParam({ name: 'customerId', type: String })

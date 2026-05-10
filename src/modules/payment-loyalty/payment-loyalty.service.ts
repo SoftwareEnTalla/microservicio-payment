@@ -32,6 +32,13 @@ interface LoyaltyWalletRow {
   lastMovementAt: Date | null;
 }
 
+interface ReferralLevelRow {
+  level: number;
+  totalMovements: number;
+  totalAmount: number;
+  distinctBeneficiaries: number;
+}
+
 @Injectable()
 export class PaymentLoyaltyService {
   constructor(
@@ -160,6 +167,69 @@ export class PaymentLoyaltyService {
         })),
       },
       count: wallets.length,
+    };
+  }
+
+  async getReferralSummary(limit = 8): Promise<Record<string, unknown>> {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 20) : 8;
+    const [totalsRaw, levelsRaw, latestReferralMovements] = await Promise.all([
+      this.movementRepository
+        .createQueryBuilder('movement')
+        .select('COUNT(*)', 'totalReferralMovements')
+        .addSelect('COALESCE(SUM(COALESCE(movement.amount, 0)), 0)', 'totalReferralAmount')
+        .addSelect('COUNT(DISTINCT movement."customerId")', 'distinctBeneficiaries')
+        .addSelect('MAX(movement."createdAt")', 'latestReferralAt')
+        .where('movement.movementType = :movementType', { movementType: 'REFERRAL_COMMISSION_EARNED' })
+        .getRawOne<Record<string, string | number | null> | undefined>(),
+      this.movementRepository
+        .createQueryBuilder('movement')
+        .select("COALESCE(NULLIF(movement.metadata ->> 'level', ''), '1')", 'level')
+        .addSelect('COUNT(*)', 'totalMovements')
+        .addSelect('COALESCE(SUM(COALESCE(movement.amount, 0)), 0)', 'totalAmount')
+        .addSelect('COUNT(DISTINCT movement."customerId")', 'distinctBeneficiaries')
+        .where('movement.movementType = :movementType', { movementType: 'REFERRAL_COMMISSION_EARNED' })
+        .groupBy("COALESCE(NULLIF(movement.metadata ->> 'level', ''), '1')")
+        .orderBy('level', 'ASC')
+        .getRawMany<Record<string, string | number>>(),
+      this.movementRepository.find({
+        where: { movementType: 'REFERRAL_COMMISSION_EARNED' },
+        order: { createdAt: 'DESC' },
+        take: safeLimit,
+      }),
+    ]);
+
+    const byLevel: ReferralLevelRow[] = levelsRaw.map((row) => ({
+      level: Number(row.level ?? 1),
+      totalMovements: Number(row.totalMovements ?? 0),
+      totalAmount: Number(row.totalAmount ?? 0),
+      distinctBeneficiaries: Number(row.distinctBeneficiaries ?? 0),
+    }));
+
+    return {
+      ok: true,
+      message: 'Resumen táctico de referral network obtenido con éxito.',
+      data: {
+        totals: {
+          totalReferralMovements: Number(totalsRaw?.totalReferralMovements ?? 0),
+          totalReferralAmount: Number(totalsRaw?.totalReferralAmount ?? 0),
+          distinctBeneficiaries: Number(totalsRaw?.distinctBeneficiaries ?? 0),
+          levelsTracked: byLevel.length,
+          latestReferralAt: totalsRaw?.latestReferralAt ?? null,
+        },
+        byLevel,
+        latest: latestReferralMovements.map((movement) => ({
+          id: movement.id,
+          customerId: movement.customerId,
+          paymentId: movement.paymentId,
+          orderId: movement.orderId,
+          amount: Number(movement.amount ?? 0),
+          level: Number((movement.metadata?.level as number | string | undefined) ?? 1),
+          referenceCode: (movement.metadata?.referenceCode as string | null | undefined) ?? null,
+          description: movement.description,
+          createdAt: movement.createdAt,
+        })),
+      },
+      count: latestReferralMovements.length,
     };
   }
 
