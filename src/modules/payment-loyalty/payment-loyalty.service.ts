@@ -48,6 +48,34 @@ interface NormalizedReferralAllocation {
   amount: number;
 }
 
+interface CommercialPolicySnapshot {
+  contractId: string | null;
+  contractCode: string | null;
+  merchantId: string;
+  policyVersion: string | null;
+  contractSnapshotVersion: string | null;
+  commissionPlanId: string | null;
+  referralTreeReference: string | null;
+  allowsReferralCommissions: boolean;
+  maxReferralLevels: number;
+  rankPolicyCode: string | null;
+  commissionLevelMatrix: Record<string, unknown>;
+  rankPolicy: Record<string, unknown>;
+  integrations: {
+    payment: {
+      ready: boolean;
+      autoApproveSettlement?: boolean;
+      payoutReferenceScope?: string;
+    };
+  };
+}
+
+interface CommercialPolicyLevelRule {
+  level: number;
+  sharePercent: number;
+  referenceCode: string | null;
+}
+
 interface LoyaltyWalletRow {
   id: string;
   customerId: string;
@@ -184,6 +212,9 @@ interface SettlePayoutRequestPayload {
 
 @Injectable()
 export class PaymentLoyaltyService {
+  private internalAccessToken: string | null = null;
+  private internalAccessTokenExpiresAt = 0;
+
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
@@ -1086,7 +1117,24 @@ export class PaymentLoyaltyService {
       };
     }
 
-    const allocations = this.normalizeReferralAllocations(totalReferralAmount, payload || {});
+    const commercialPolicy = await this.getCommercialPolicySnapshot(payment.merchantId);
+    if (!commercialPolicy) {
+      throw new BadRequestException(
+        `No existe snapshot comercial versionado para merchant ${payment.merchantId}. Debe configurarse en SalesManager antes de liquidar referral multinivel.`,
+      );
+    }
+    if (!commercialPolicy.integrations.payment.ready) {
+      throw new BadRequestException(
+        `La policy ${commercialPolicy.policyVersion || commercialPolicy.contractSnapshotVersion || 'sin-version'} no está lista para liquidación en Payment.`,
+      );
+    }
+    if (!commercialPolicy.allowsReferralCommissions) {
+      throw new BadRequestException(
+        `La policy ${commercialPolicy.policyVersion || commercialPolicy.contractSnapshotVersion || 'sin-version'} no habilita referral commissions.`,
+      );
+    }
+
+    const allocations = this.normalizeReferralAllocations(totalReferralAmount, payload || {}, commercialPolicy);
     const [eligibility] = await this.buildMultilevelEligibilityRows([payment]);
     if (!eligibility?.eligible) {
       throw new BadRequestException(
@@ -1125,6 +1173,13 @@ export class PaymentLoyaltyService {
               accountingStatusBefore: payment.accountingStatus,
               source: 'payment-loyalty',
               distributionMode: 'MULTILEVEL',
+              policyVersion: commercialPolicy.policyVersion,
+              contractSnapshotVersion: commercialPolicy.contractSnapshotVersion,
+              contractId: commercialPolicy.contractId,
+              contractCode: commercialPolicy.contractCode,
+              commissionPlanId: commercialPolicy.commissionPlanId,
+              referralTreeReference: commercialPolicy.referralTreeReference,
+              rankPolicyCode: commercialPolicy.rankPolicyCode,
             },
           }),
         );
@@ -1154,6 +1209,16 @@ export class PaymentLoyaltyService {
         paymentId,
         totalDistributedAmount: allocations.reduce((sum, allocation) => sum + allocation.amount, 0),
         eligibility,
+        commercialPolicy: {
+          merchantId: commercialPolicy.merchantId,
+          contractId: commercialPolicy.contractId,
+          contractCode: commercialPolicy.contractCode,
+          policyVersion: commercialPolicy.policyVersion,
+          contractSnapshotVersion: commercialPolicy.contractSnapshotVersion,
+          commissionPlanId: commercialPolicy.commissionPlanId,
+          rankPolicyCode: commercialPolicy.rankPolicyCode,
+          referralTreeReference: commercialPolicy.referralTreeReference,
+        },
         wallets: transactionResult.walletSnapshots,
         movements: transactionResult.movements.map((movement) => ({
           id: movement.id,
@@ -1187,11 +1252,17 @@ export class PaymentLoyaltyService {
   private normalizeReferralAllocations(
     totalReferralAmount: number,
     payload: MultilevelReferralSettlementPayload,
+    commercialPolicy: CommercialPolicySnapshot,
   ): NormalizedReferralAllocation[] {
     const rawBeneficiaries = Array.isArray(payload.beneficiaries) ? payload.beneficiaries : [];
     if (rawBeneficiaries.length === 0) {
       throw new BadRequestException('beneficiaries debe contener al menos un destinatario para distribución multinivel');
     }
+
+    const policyRules = this.extractCommercialPolicyLevelRules(
+      commercialPolicy.commissionLevelMatrix,
+      commercialPolicy.maxReferralLevels,
+    );
 
     const allocations = rawBeneficiaries.map((beneficiary, index): NormalizedReferralAllocation => {
       const beneficiaryCustomerId = String(beneficiary.beneficiaryCustomerId || '').trim();
@@ -1202,12 +1273,31 @@ export class PaymentLoyaltyService {
       if (!Number.isFinite(level) || level < 1) {
         throw new BadRequestException(`level debe ser un entero mayor o igual que 1 en beneficiaries[${index}]`);
       }
+      if (level > commercialPolicy.maxReferralLevels) {
+        throw new BadRequestException(
+          `level ${level} excede maxReferralLevels=${commercialPolicy.maxReferralLevels} definido por la policy ${commercialPolicy.policyVersion || commercialPolicy.contractSnapshotVersion || 'sin-version'}`,
+        );
+      }
 
       const explicitAmount = beneficiary.amount === undefined ? Number.NaN : Number(beneficiary.amount);
       const sharePercent = beneficiary.sharePercent === undefined ? Number.NaN : Number(beneficiary.sharePercent);
+      const policyRule = policyRules.get(level);
       let amount = 0;
 
-      if (Number.isFinite(explicitAmount)) {
+      if (policyRule) {
+        const expectedAmount = Number(((totalReferralAmount * policyRule.sharePercent) / 100).toFixed(2));
+        if (Number.isFinite(explicitAmount) && Math.abs(Number(explicitAmount.toFixed(2)) - expectedAmount) > 0.01) {
+          throw new BadRequestException(
+            `amount en beneficiaries[${index}] no respeta la policy ${commercialPolicy.policyVersion || commercialPolicy.contractSnapshotVersion || 'sin-version'} para level ${level}`,
+          );
+        }
+        if (Number.isFinite(sharePercent) && Math.abs(Number(sharePercent.toFixed(2)) - policyRule.sharePercent) > 0.01) {
+          throw new BadRequestException(
+            `sharePercent en beneficiaries[${index}] no respeta la policy ${commercialPolicy.policyVersion || commercialPolicy.contractSnapshotVersion || 'sin-version'} para level ${level}`,
+          );
+        }
+        amount = expectedAmount;
+      } else if (Number.isFinite(explicitAmount)) {
         amount = explicitAmount;
       } else if (Number.isFinite(sharePercent)) {
         amount = (totalReferralAmount * sharePercent) / 100;
@@ -1220,7 +1310,7 @@ export class PaymentLoyaltyService {
       return {
         beneficiaryCustomerId,
         level,
-        referenceCode: String(beneficiary.referenceCode || '').trim() || null,
+        referenceCode: String(beneficiary.referenceCode || policyRule?.referenceCode || '').trim() || null,
         amount: Number(amount.toFixed(2)),
       };
     });
@@ -1251,6 +1341,54 @@ export class PaymentLoyaltyService {
     }
 
     return allocations.filter((allocation) => allocation.amount > 0);
+  }
+
+  private extractCommercialPolicyLevelRules(
+    matrix: Record<string, unknown>,
+    maxReferralLevels: number,
+  ): Map<number, CommercialPolicyLevelRule> {
+    const levelRules = new Map<number, CommercialPolicyLevelRule>();
+    const candidates = [
+      matrix.levels,
+      matrix.rules,
+      matrix.distribution,
+      matrix.allocations,
+      matrix.items,
+      Array.isArray(matrix) ? matrix : null,
+    ].find((value) => Array.isArray(value));
+
+    if (!Array.isArray(candidates)) {
+      return levelRules;
+    }
+
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+        continue;
+      }
+
+      const level = Number((candidate as Record<string, unknown>).level ?? (candidate as Record<string, unknown>).depth ?? 0);
+      const sharePercent = Number(
+        (candidate as Record<string, unknown>).sharePercent ??
+          (candidate as Record<string, unknown>).percentage ??
+          (candidate as Record<string, unknown>).percent ??
+          (candidate as Record<string, unknown>).share ??
+          Number.NaN,
+      );
+
+      if (!Number.isFinite(level) || level < 1 || level > maxReferralLevels || !Number.isFinite(sharePercent) || sharePercent < 0) {
+        continue;
+      }
+
+      levelRules.set(level, {
+        level,
+        sharePercent: Number(sharePercent.toFixed(2)),
+        referenceCode:
+          String((candidate as Record<string, unknown>).referenceCode ?? (candidate as Record<string, unknown>).code ?? '').trim() ||
+          null,
+      });
+    }
+
+    return levelRules;
   }
 
   private findDuplicateAllocationKey(allocations: NormalizedReferralAllocation[]): string | null {
@@ -1371,6 +1509,74 @@ export class PaymentLoyaltyService {
     return `REF-${String(customerId || '').replace(/-/g, '').slice(0, 8).toUpperCase()}`;
   }
 
+  private async getCommercialPolicySnapshot(merchantId: string): Promise<CommercialPolicySnapshot | null> {
+    const normalizedMerchantId = String(merchantId || '').trim();
+    if (!normalizedMerchantId) {
+      return null;
+    }
+
+    const baseUrl = String(
+      process.env.SALESMANAGER_COMMERCIAL_POLICY_URL || process.env.SALESMANAGER_SERVICE_URL || 'http://salesmanager-service-app-1:3013',
+    ).replace(/\/$/, '');
+
+    try {
+      const response = await fetch(
+        `${baseUrl}/salesmanager-lifecycle/merchant/${encodeURIComponent(normalizedMerchantId)}/commercial-policy`,
+        {
+          headers: await this.buildInternalAuthHeaders(),
+        },
+      );
+      if (!response.ok) {
+        return null;
+      }
+
+      const payload = (await response.json()) as { ok?: boolean; data?: unknown };
+      if (payload?.ok !== true || !payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+        return null;
+      }
+
+      const data = payload.data as Record<string, unknown>;
+      const integrations =
+        data.integrations && typeof data.integrations === 'object' && !Array.isArray(data.integrations)
+          ? (data.integrations as Record<string, unknown>)
+          : {};
+      const paymentIntegration =
+        integrations.payment && typeof integrations.payment === 'object' && !Array.isArray(integrations.payment)
+          ? (integrations.payment as Record<string, unknown>)
+          : {};
+
+      return {
+        contractId: String(data.contractId || '').trim() || null,
+        contractCode: String(data.contractCode || '').trim() || null,
+        merchantId: String(data.merchantId || normalizedMerchantId).trim(),
+        policyVersion: String(data.policyVersion || '').trim() || null,
+        contractSnapshotVersion: String(data.contractSnapshotVersion || '').trim() || null,
+        commissionPlanId: String(data.commissionPlanId || '').trim() || null,
+        referralTreeReference: String(data.referralTreeReference || '').trim() || null,
+        allowsReferralCommissions: Boolean(data.allowsReferralCommissions),
+        maxReferralLevels: Number(data.maxReferralLevels ?? 1) || 1,
+        rankPolicyCode: String(data.rankPolicyCode || '').trim() || null,
+        commissionLevelMatrix:
+          data.commissionLevelMatrix && typeof data.commissionLevelMatrix === 'object' && !Array.isArray(data.commissionLevelMatrix)
+            ? (data.commissionLevelMatrix as Record<string, unknown>)
+            : {},
+        rankPolicy:
+          data.rankPolicy && typeof data.rankPolicy === 'object' && !Array.isArray(data.rankPolicy)
+            ? (data.rankPolicy as Record<string, unknown>)
+            : {},
+        integrations: {
+          payment: {
+            ready: Boolean(paymentIntegration.ready),
+            autoApproveSettlement: Boolean(paymentIntegration.autoApproveSettlement),
+            payoutReferenceScope: String(paymentIntegration.payoutReferenceScope || '').trim() || undefined,
+          },
+        },
+      };
+    } catch {
+      return null;
+    }
+  }
+
   private resolveLoyaltyRank(input: {
     totalEarnedReferral: number;
     totalEarnedCashback: number;
@@ -1440,5 +1646,60 @@ export class PaymentLoyaltyService {
       processedAt: request.processedAt ?? null,
       createdAt: request.createdAt,
     };
+  }
+
+  private async buildInternalAuthHeaders(): Promise<Record<string, string>> {
+    const configuredToken = String(process.env.INTERNAL_SERVICE_AUTH_TOKEN || '').trim();
+    if (configuredToken) {
+      return {
+        Authorization: configuredToken.toLowerCase().startsWith('bearer ') ? configuredToken : `Bearer ${configuredToken}`,
+      };
+    }
+
+    const accessToken = await this.getInternalAccessToken();
+    if (!accessToken) {
+      return {};
+    }
+
+    return {
+      Authorization: `Bearer ${accessToken}`,
+    };
+  }
+
+  private async getInternalAccessToken(): Promise<string | null> {
+    if (this.internalAccessToken && this.internalAccessTokenExpiresAt > Date.now()) {
+      return this.internalAccessToken;
+    }
+
+    const securityBaseUrl = String(process.env.SECURITY_SERVICE_URL || 'http://security-service-app-1:3015/api').replace(/\/$/, '');
+    const identifier = String(process.env.SA_EMAIL || '').trim();
+    const password = String(process.env.SA_PWD || '').trim();
+    if (!identifier || !password) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${securityBaseUrl}/logins/command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
+      if (!response.ok) {
+        return null;
+      }
+
+      const payload = (await response.json()) as { accessToken?: string; expiresAt?: string };
+      const accessToken = String(payload.accessToken || '').trim();
+      if (!accessToken) {
+        return null;
+      }
+
+      const expiresAt = payload.expiresAt ? new Date(payload.expiresAt).getTime() : Date.now() + 5 * 60 * 1000;
+      this.internalAccessToken = accessToken;
+      this.internalAccessTokenExpiresAt = Number.isFinite(expiresAt) ? expiresAt - 15000 : Date.now() + 5 * 60 * 1000;
+      return this.internalAccessToken;
+    } catch {
+      return null;
+    }
   }
 }
