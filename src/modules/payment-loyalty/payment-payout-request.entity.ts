@@ -49,6 +49,15 @@ export class PaymentPayoutRequest {
   @Column({ type: 'varchar', length: 255, nullable: true })
   notes?: string | null;
 
+  @Column({ type: 'decimal', precision: 14, scale: 2, nullable: false, default: 0 })
+  merchantDebtAppliedAmount!: number;
+
+  @Column({ type: 'decimal', precision: 14, scale: 2, nullable: false, default: 0 })
+  merchantNetAmount!: number;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  settlementReference?: string | null;
+
   @Column({ type: 'timestamp', nullable: true })
   requestedAt?: Date | null;
 

@@ -2,6 +2,14 @@ import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { PaymentLoyaltyService } from './payment-loyalty.service';
 
+type MultilevelReferralBeneficiaryInput = {
+  beneficiaryCustomerId?: string;
+  level?: number;
+  referenceCode?: string;
+  sharePercent?: number;
+  amount?: number;
+};
+
 @ApiTags('payment-loyalty')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Autenticación requerida.' })
@@ -31,6 +39,14 @@ export class PaymentLoyaltyController {
   @ApiResponse({ status: 200, description: 'Referral network obtenido.' })
   async getReferralSummary(@Query('limit') limit?: string): Promise<Record<string, unknown>> {
     return this.service.getReferralSummary(Number(limit || 8));
+  }
+
+  @Get('referrals/multilevel-eligibility')
+  @ApiOperation({ summary: 'Resumen táctico de elegibilidad multinivel por payment con referralAmount' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Elegibilidad multinivel obtenida.' })
+  async getMultilevelEligibilitySummary(@Query('limit') limit?: string): Promise<Record<string, unknown>> {
+    return this.service.getMultilevelEligibilitySummary(Number(limit || 8));
   }
 
   @Get('payouts/summary')
@@ -91,6 +107,46 @@ export class PaymentLoyaltyController {
     return this.service.settleReferral(paymentId, payload || {});
   }
 
+  @Post('settlement/referral-multilevel/payment/:paymentId')
+  @ApiOperation({ summary: 'Distribuye referralAmount de un payment en múltiples niveles y residual de plataforma' })
+  @ApiParam({ name: 'paymentId', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        beneficiaries: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              beneficiaryCustomerId: { type: 'string', format: 'uuid' },
+              level: { type: 'number', example: 1 },
+              referenceCode: { type: 'string', example: 'REF-L1' },
+              sharePercent: { type: 'number', example: 60 },
+              amount: { type: 'number', example: 6 },
+            },
+            required: ['beneficiaryCustomerId', 'level'],
+          },
+        },
+        platformResidualCustomerId: { type: 'string', format: 'uuid' },
+        platformReferenceCode: { type: 'string', example: 'PLATFORM-RESIDUAL' },
+      },
+      required: ['beneficiaries'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Referral multinivel distribuido con éxito.' })
+  async settleReferralMultilevel(
+    @Param('paymentId') paymentId: string,
+    @Body()
+    payload: {
+      beneficiaries?: MultilevelReferralBeneficiaryInput[];
+      platformResidualCustomerId?: string;
+      platformReferenceCode?: string;
+    },
+  ): Promise<Record<string, unknown>> {
+    return this.service.settleReferralMultilevel(paymentId, payload || {});
+  }
+
   @Post('payouts/request')
   @ApiOperation({ summary: 'Crea un payout request debitando saldo withdrawable del wallet' })
   @ApiBody({
@@ -124,5 +180,67 @@ export class PaymentLoyaltyController {
     },
   ): Promise<Record<string, unknown>> {
     return this.service.createPayoutRequest(payload || {});
+  }
+
+  @Post('payouts/request/:payoutRequestId/approve')
+  @ApiOperation({ summary: 'Aprueba un payout request y fija deuda aplicada al merchant' })
+  @ApiParam({ name: 'payoutRequestId', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        note: { type: 'string', example: 'Aprobado por operaciones' },
+        merchantDebtAmount: { type: 'number', example: 2.5 },
+        invoiceId: { type: 'string', format: 'uuid' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Payout request aprobado.' })
+  async approvePayoutRequest(
+    @Param('payoutRequestId') payoutRequestId: string,
+    @Body() payload: { note?: string; merchantDebtAmount?: number; invoiceId?: string },
+  ): Promise<Record<string, unknown>> {
+    return this.service.approvePayoutRequest(payoutRequestId, payload || {});
+  }
+
+  @Post('payouts/request/:payoutRequestId/reject')
+  @ApiOperation({ summary: 'Rechaza un payout request y devuelve el saldo withdrawable al wallet' })
+  @ApiParam({ name: 'payoutRequestId', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        reason: { type: 'string', example: 'Cuenta de cobro inválida' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Payout request rechazado y revertido.' })
+  async rejectPayoutRequest(
+    @Param('payoutRequestId') payoutRequestId: string,
+    @Body() payload: { reason?: string },
+  ): Promise<Record<string, unknown>> {
+    return this.service.rejectPayoutRequest(payoutRequestId, payload || {});
+  }
+
+  @Post('payouts/request/:payoutRequestId/settle')
+  @ApiOperation({ summary: 'Liquida un payout request y registra deuda aplicada y referencia de settlement' })
+  @ApiParam({ name: 'payoutRequestId', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        merchantDebtAmount: { type: 'number', example: 1.5 },
+        settlementReference: { type: 'string', example: 'SETTLEMENT-2026-0001' },
+        note: { type: 'string', example: 'Liquidado en batch diario' },
+        invoiceId: { type: 'string', format: 'uuid' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Payout request liquidado.' })
+  async settlePayoutRequest(
+    @Param('payoutRequestId') payoutRequestId: string,
+    @Body() payload: { merchantDebtAmount?: number; settlementReference?: string; note?: string; invoiceId?: string },
+  ): Promise<Record<string, unknown>> {
+    return this.service.settlePayoutRequest(payoutRequestId, payload || {});
   }
 }
