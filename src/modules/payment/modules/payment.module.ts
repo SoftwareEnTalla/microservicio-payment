@@ -56,6 +56,7 @@ import { PaymentOnboardingStartedSyncSaga } from "../sagas/payment-onboarding-st
 import { PaymentOnboardingApprovedSyncSaga } from "../sagas/payment-onboarding-approved-sync.saga";
 import { PaymentOnboardingRejectedSyncSaga } from "../sagas/payment-onboarding-rejected-sync.saga";
 import { PaymentOnboardingExpiredSyncSaga } from "../sagas/payment-onboarding-expired-sync.saga";import { EVENT_TOPICS } from "../events/event-registry";
+import { PaymentRefundRequestedSyncSaga } from "../sagas/payment-refund-requested-sync.saga";
 
 //Interceptors
 import { PaymentInterceptor } from "../interceptors/payment.interceptor";
@@ -99,7 +100,9 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
     PaymentOnboardingStartedSyncSaga,
     PaymentOnboardingApprovedSyncSaga,
     PaymentOnboardingRejectedSyncSaga,
-    PaymentOnboardingExpiredSyncSaga,    //Configurations
+    PaymentOnboardingExpiredSyncSaga,
+    PaymentRefundRequestedSyncSaga,
+    //Configurations
     {
       provide: 'EVENT_SOURCING_CONFIG',
       useFactory: () => ({
