@@ -8,6 +8,9 @@ import { PaymentWalletMovement } from './payment-wallet-movement.entity';
 import { PaymentPayoutRequest } from './payment-payout-request.entity';
 import { PaymentLoyaltyController } from './payment-loyalty.controller';
 import { PaymentLoyaltyService } from './payment-loyalty.service';
+import { FinancialActionGuard } from '../../common/financial-security/financial-action.guard';
+import { SecurityAuditBridgeService } from '../../common/financial-security/security-audit-bridge.service';
+import { SecurityIdentityBridgeService } from '../../common/financial-security/security-identity-bridge.service';
 
 @Module({
   imports: [
@@ -21,7 +24,7 @@ import { PaymentLoyaltyService } from './payment-loyalty.service';
     ]),
   ],
   controllers: [PaymentLoyaltyController],
-  providers: [PaymentLoyaltyService],
+  providers: [PaymentLoyaltyService, FinancialActionGuard, SecurityAuditBridgeService, SecurityIdentityBridgeService],
   exports: [PaymentLoyaltyService],
 })
 export class PaymentLoyaltyModule {}

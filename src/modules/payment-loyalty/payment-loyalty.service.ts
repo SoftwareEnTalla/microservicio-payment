@@ -1357,24 +1357,48 @@ export class PaymentLoyaltyService {
       Array.isArray(matrix) ? matrix : null,
     ].find((value) => Array.isArray(value));
 
-    if (!Array.isArray(candidates)) {
+    if (Array.isArray(candidates)) {
+      for (const candidate of candidates) {
+        if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+          continue;
+        }
+
+        const level = Number((candidate as Record<string, unknown>).level ?? (candidate as Record<string, unknown>).depth ?? 0);
+        const sharePercent = Number(
+          (candidate as Record<string, unknown>).sharePercent ??
+            (candidate as Record<string, unknown>).percentage ??
+            (candidate as Record<string, unknown>).percent ??
+            (candidate as Record<string, unknown>).share ??
+            Number.NaN,
+        );
+
+        if (!Number.isFinite(level) || level < 1 || level > maxReferralLevels || !Number.isFinite(sharePercent) || sharePercent < 0) {
+          continue;
+        }
+
+        levelRules.set(level, {
+          level,
+          sharePercent: Number(sharePercent.toFixed(2)),
+          referenceCode:
+            String((candidate as Record<string, unknown>).referenceCode ?? (candidate as Record<string, unknown>).code ?? '').trim() ||
+            null,
+        });
+      }
+    }
+
+    if (levelRules.size > 0) {
       return levelRules;
     }
 
-    for (const candidate of candidates) {
-      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    for (const [rawKey, rawValue] of Object.entries(matrix)) {
+      const normalizedKey = String(rawKey || '').trim();
+      const levelMatch = normalizedKey.match(/^(?:L|LEVEL)?\s*(\d+)$/i);
+      if (!levelMatch) {
         continue;
       }
 
-      const level = Number((candidate as Record<string, unknown>).level ?? (candidate as Record<string, unknown>).depth ?? 0);
-      const sharePercent = Number(
-        (candidate as Record<string, unknown>).sharePercent ??
-          (candidate as Record<string, unknown>).percentage ??
-          (candidate as Record<string, unknown>).percent ??
-          (candidate as Record<string, unknown>).share ??
-          Number.NaN,
-      );
-
+      const level = Number(levelMatch[1]);
+      const sharePercent = Number(rawValue);
       if (!Number.isFinite(level) || level < 1 || level > maxReferralLevels || !Number.isFinite(sharePercent) || sharePercent < 0) {
         continue;
       }
@@ -1382,9 +1406,7 @@ export class PaymentLoyaltyService {
       levelRules.set(level, {
         level,
         sharePercent: Number(sharePercent.toFixed(2)),
-        referenceCode:
-          String((candidate as Record<string, unknown>).referenceCode ?? (candidate as Record<string, unknown>).code ?? '').trim() ||
-          null,
+        referenceCode: normalizedKey.toUpperCase(),
       });
     }
 

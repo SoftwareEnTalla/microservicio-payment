@@ -1,0 +1,4 @@
+
+> api.entalla.backend@0.0.1 build
+> nest build && if [ -d src/i18n ]; then cp -r src/i18n dist/; fi
+

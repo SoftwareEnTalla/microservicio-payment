@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { PaymentLoyaltyService } from './payment-loyalty.service';
+import { FinancialAction } from '../../common/financial-security/financial-action.decorator';
+import { FinancialActionGuard } from '../../common/financial-security/financial-action.guard';
 
 type MultilevelReferralBeneficiaryInput = {
   beneficiaryCustomerId?: string;
@@ -78,6 +80,13 @@ export class PaymentLoyaltyController {
   }
 
   @Post('settlement/cashback/payment/:paymentId')
+  @UseGuards(FinancialActionGuard)
+  @FinancialAction({
+    policyCode: 'PAYMENT_SETTLE_CASHBACK',
+    actionType: 'PAYMENT_SETTLE_CASHBACK',
+    targetType: 'payment',
+    requiredPermissions: ['payments_manage', 'payment_settlement_manage', 'erp_all'],
+  })
   @ApiOperation({ summary: 'Acredita cashback de un payment en el wallet del customer' })
   @ApiParam({ name: 'paymentId', type: String })
   @ApiResponse({ status: 200, description: 'Cashback acreditado o ya aplicado.' })
@@ -86,6 +95,13 @@ export class PaymentLoyaltyController {
   }
 
   @Post('settlement/referral/payment/:paymentId')
+  @UseGuards(FinancialActionGuard)
+  @FinancialAction({
+    policyCode: 'PAYMENT_SETTLE_REFERRAL',
+    actionType: 'PAYMENT_SETTLE_REFERRAL',
+    targetType: 'payment',
+    requiredPermissions: ['payments_manage', 'payment_settlement_manage', 'erp_all'],
+  })
   @ApiOperation({ summary: 'Distribuye referralAmount de un payment sobre un wallet withdrawable' })
   @ApiParam({ name: 'paymentId', type: String })
   @ApiBody({
@@ -108,6 +124,13 @@ export class PaymentLoyaltyController {
   }
 
   @Post('settlement/referral-multilevel/payment/:paymentId')
+  @UseGuards(FinancialActionGuard)
+  @FinancialAction({
+    policyCode: 'PAYMENT_SETTLE_REFERRAL_MULTILEVEL',
+    actionType: 'PAYMENT_SETTLE_REFERRAL_MULTILEVEL',
+    targetType: 'payment',
+    requiredPermissions: ['payments_manage', 'payment_settlement_manage', 'erp_all'],
+  })
   @ApiOperation({ summary: 'Distribuye referralAmount de un payment en múltiples niveles y residual de plataforma' })
   @ApiParam({ name: 'paymentId', type: String })
   @ApiBody({
@@ -183,6 +206,13 @@ export class PaymentLoyaltyController {
   }
 
   @Post('payouts/request/:payoutRequestId/approve')
+  @UseGuards(FinancialActionGuard)
+  @FinancialAction({
+    policyCode: 'PAYMENT_PAYOUT_APPROVE',
+    actionType: 'PAYMENT_PAYOUT_APPROVE',
+    targetType: 'payment-payout-request',
+    requiredPermissions: ['payment_payout_approve', 'payments_manage', 'erp_all'],
+  })
   @ApiOperation({ summary: 'Aprueba un payout request y fija deuda aplicada al merchant' })
   @ApiParam({ name: 'payoutRequestId', type: String })
   @ApiBody({
@@ -204,6 +234,13 @@ export class PaymentLoyaltyController {
   }
 
   @Post('payouts/request/:payoutRequestId/reject')
+  @UseGuards(FinancialActionGuard)
+  @FinancialAction({
+    policyCode: 'PAYMENT_PAYOUT_REJECT',
+    actionType: 'PAYMENT_PAYOUT_REJECT',
+    targetType: 'payment-payout-request',
+    requiredPermissions: ['payment_payout_reject', 'payments_manage', 'erp_all'],
+  })
   @ApiOperation({ summary: 'Rechaza un payout request y devuelve el saldo withdrawable al wallet' })
   @ApiParam({ name: 'payoutRequestId', type: String })
   @ApiBody({
@@ -223,6 +260,13 @@ export class PaymentLoyaltyController {
   }
 
   @Post('payouts/request/:payoutRequestId/settle')
+  @UseGuards(FinancialActionGuard)
+  @FinancialAction({
+    policyCode: 'PAYMENT_PAYOUT_SETTLE',
+    actionType: 'PAYMENT_PAYOUT_SETTLE',
+    targetType: 'payment-payout-request',
+    requiredPermissions: ['payment_payout_settle', 'payments_manage', 'erp_all'],
+  })
   @ApiOperation({ summary: 'Liquida un payout request y registra deuda aplicada y referencia de settlement' })
   @ApiParam({ name: 'payoutRequestId', type: String })
   @ApiBody({
