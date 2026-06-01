@@ -51,6 +51,7 @@ import {
 import { LogExecutionTime } from 'src/common/logger/loggers.functions';
 import { LoggerClient } from 'src/common/logger/logger.client';
 import { logger } from '@core/logs/logger';
+import { getCurrentAuthorizationHeader } from 'src/common/logger/request-trace-context';
 
 @Injectable()
 export class PaymentCrudSaga {
@@ -162,6 +163,7 @@ export class PaymentCrudSaga {
   })
   private async handlePaymentUpdated(event: PaymentUpdatedEvent): Promise<void> {
     try {
+      await this.syncInventoryReservation(event);
       this.logger.log(`Saga Payment Updated completada: ${event.aggregateId}`);
     } catch (error: any) {
       this.handleSagaError(error, event);
@@ -196,5 +198,75 @@ export class PaymentCrudSaga {
   private handleSagaError(error: Error, event: any) {
     this.logger.error(`Error en saga para evento ${event.constructor.name}: ${error.message}`);
     this.eventBus.publish(new SagaPaymentFailedEvent( error,event));
+  }
+
+  private async syncInventoryReservation(event: PaymentUpdatedEvent): Promise<void> {
+    const snapshot = this.extractSnapshot(event);
+    const paymentId = String(snapshot?.id ?? event.aggregateId ?? '').trim();
+    const orderId = String(snapshot?.orderId ?? '').trim();
+    const paymentStatus = String(snapshot?.status ?? '').trim().toUpperCase();
+
+    if (!paymentId || !orderId || !paymentStatus) {
+      return;
+    }
+
+    if (!['SUCCEEDED', 'AUTHORIZED', 'CAPTURED', 'SETTLED', 'FAILED', 'REJECTED', 'CANCELLED', 'VOIDED', 'REFUNDED', 'CHARGEBACK'].includes(paymentStatus)) {
+      return;
+    }
+
+    const ordersApiBaseUrl = (process.env.ORDERS_API_BASE_URL || 'http://host.docker.internal:3003/api').replace(/\/$/, '');
+    const authorizationHeader = this.resolveOrdersAuthorizationHeader();
+    const response = await fetch(`${ordersApiBaseUrl}/orders-lifecycle/stock/payment/${paymentId}/sync`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        ...(authorizationHeader ? { Authorization: authorizationHeader } : {}),
+      },
+      body: JSON.stringify({
+        paymentStatus,
+        reason: `payment-status:${paymentStatus}`,
+      }),
+    });
+
+    const responseBody = await this.safeReadJson(response);
+    if (!response.ok) {
+      throw new Error(`Orders rechazó la sincronización de stock para payment ${paymentId} con estado ${response.status}: ${JSON.stringify(responseBody)}`);
+    }
+
+    this.logger.log(`Saga Payment sincronizó stock con Orders para ${paymentId} en estado ${paymentStatus}`);
+  }
+
+  private extractSnapshot(event: PaymentUpdatedEvent): Record<string, any> {
+    return (event as any)?.payload?.instance || {};
+  }
+
+  private resolveOrdersAuthorizationHeader(): string | undefined {
+    const requestAuthorizationHeader = getCurrentAuthorizationHeader();
+    if (requestAuthorizationHeader) {
+      return requestAuthorizationHeader;
+    }
+
+    const internalServiceToken = String(process.env.INTERNAL_SERVICE_AUTH_TOKEN || '').trim();
+    if (!internalServiceToken) {
+      return undefined;
+    }
+
+    return internalServiceToken.toLowerCase().startsWith('bearer ')
+      ? internalServiceToken
+      : `Bearer ${internalServiceToken}`;
+  }
+
+  private async safeReadJson(response: Response): Promise<Record<string, any> | null> {
+    const text = await response.text();
+    if (!text) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text) as Record<string, any>;
+    } catch {
+      return { raw: text };
+    }
   }
 }
